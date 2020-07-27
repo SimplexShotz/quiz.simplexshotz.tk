@@ -31,12 +31,12 @@
         user-select: none;
         flex-direction: column;
       }
-      .quizcreator-name, .question-question {
+      .quizcreator-name, .question-question, .quizcreator-option-input {
         width: calc(100% - 12px);
         padding: 5px;
         font-size: 14pt;
       }
-      .question-question:focus {
+      .quizcreator-name:focus, .question-question:focus, .quizcreator-option-input:focus {
         outline: none;
       }
       .question-image-display {
@@ -119,7 +119,7 @@
           </div>
           <div class="quizcreator-option">
             <p>Questions to Show (leave as "0" to show all):</p>
-            <input type="number" onchange="updateOption('questionsToShow', this)" value="0">
+            <input class="quizcreator-option-input" type="number" onchange="updateOption('questionsToShow', this)" value="0">
           </div>
         </div>
         <div class="questions">
