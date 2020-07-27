@@ -116,6 +116,11 @@ a {
   height: 1px;
   margin: 0px 10px !important;
 }
+.small {
+  color: rgb(200, 200, 200);
+  margin-bottom: 0px;
+  font-size: 12pt;
+}
 .no-margin {
   margin: 0px;
 }
