@@ -317,6 +317,8 @@
                 window.open("https://quiz.simplexshotz.tk/quiz/index.html?quiz=" + quiz.name, "_self");
               }
             })
+          } else {
+            document.getElementsByClassName("create-quiz-text")[0].innerText = "✓ Create Quiz";
           }
         });
         document.getElementsByClassName("create-quiz-text")[0].innerText = "Creating Quiz...";
