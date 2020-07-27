@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ReQuiz</title>
+    <link rel="icon" href="../resources/requiz-icon.png">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;500;900&display=swap" rel="stylesheet">
+
+    <script src="https://www.gstatic.com/firebasejs/7.17.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/7.17.1/firebase-database.js"></script>
+
+    <style>
+      body {
+        background-color: rgb(255, 255, 255);
+        margin: 0px;
+        padding: 0px;
+        font-family: "Roboto";
+      }
+
+      h1 {
+        margin-top: 0px;
+      }
+      p {
+        font-size: 16pt;
+        font-weight: 300;
+      }
+
+      .header {
+        position: sticky;
+        top: 0px;
+        background-color: rgb(255, 255, 255);
+        color: rgb(50, 50, 50);
+        width: calc(100% - 100px);
+        height: 50px;
+        padding: 10px 50px;
+        border-bottom: 1px solid rgb(240, 240, 240);
+        display: flex;
+        z-index: 1;
+      }
+      .header-logo {
+        width: 50px;
+        height: 50px;
+        margin-right: 25px;
+      }
+      .header-text-container {
+        flex-grow: 1;
+      }
+      .header-text {
+        margin: 0px;
+        line-height: 50px;
+      }
+      .header-links div {
+        margin: 0px;
+        line-height: 50px;
+        font-size: 16pt;
+      }
+      .dropdown-container-active {
+        border-radius: 10px;
+        box-shadow: 0px 0px 10px 0px rgba(200, 200, 200, 0.5);
+      }
+      .dropdown {
+        display: flex;
+        padding: 0px 12px;
+        border-radius: 10px;
+        transition: box-shadow 0.25s, background-color 0.25s;
+        user-select: none;
+      }
+      .dropdown-text {
+        padding-right: 10px;
+      }
+      .down-arrow {
+        width: 10px;
+        height: 10px;
+        border-right: 2px solid rgb(0, 0, 0);
+        border-bottom: 2px solid rgb(0, 0, 0);
+        transform: translateY(16px) rotate(45deg);
+        transition: transform 0.5s;
+      }
+      .down-arrow-active {
+        transform: translateY(22.8px) rotate(225deg);
+      }
+      .dropdown-list {
+        display: none;
+        background-color: rgb(255, 255, 255);
+        border-radius: 10px;
+        flex-direction: column;
+      }
+      .dropdown-list-active {
+        display: flex;
+      }
+      .dropdown-item {
+        padding: 0px 12px;
+        border-radius: 10px;
+        transition: box-shadow 0.25s, background-color 0.25s;
+        user-select: none;
+        flex-direction: column;
+      }
+      .dropdown:hover, .dropdown-item:hover {
+        cursor: pointer;
+        box-shadow: 0px 0px 10px 0px rgba(200, 200, 200, 0.5);
+      }
+      .dropdown:active, .dropdown-item:active {
+        background-color: rgb(250, 250, 250);
+      }
+
+      .content {
+        background-color: rgb(255, 255, 255);
+        padding: 50px 20%;
+      }
+
+      .quizplayer-title, .question, .finish-quiz {
+        padding: 20px;
+        margin-top: 20px;
+        border-radius: 10px;
+        box-shadow: 0px 0px 10px 0px rgba(200, 200, 200, 0.5);
+        user-select: none;
+        flex-direction: column;
+      }
+
+      .question-image {
+        max-width: 100%;
+        max-height: 300px;
+      }
+
+      .options {
+        display: flex;
+        flex-direction: column;
+      }
+      .option {
+        display: flex;
+        padding: 5px;
+        border-radius: 10px;
+        transition: box-shadow 0.25s, background-color 0.25s;
+      }
+      .option:hover {
+        cursor: pointer;
+        box-shadow: 0px 0px 10px 0px rgba(200, 200, 200, 0.5);
+      }
+      .option:active {
+        background-color: rgb(250, 250, 250);
+      }
+      .option-number {
+        background-color: rgb(255, 255, 255);
+        width: 8px;
+        height: 8px;
+        padding: 8px 9px 8px 7px;
+        margin-right: 10px;
+        border-radius: 100%;
+        border: 2px solid rgb(0, 0, 0);
+        line-height: 8px;
+        transition: background-color 0.5s;
+      }
+      .option-number-active {
+        background-color: rgb(200, 200, 200);
+      }
+      .option-text-container {
+        display: flex;
+        justify-content: center;
+        flex-direction: column;
+      }
+      .option-text {
+        font-weight: 300;
+      }
+
+      .finish-quiz {
+        transition: background-color 0.25s;
+      }
+      .finish-quiz:hover {
+        cursor: pointer;
+      }
+      .finish-quiz:active {
+        background-color: rgb(250, 250, 250);
+      }
+
+      .spacer {
+        background-color: rgb(240, 240, 240);
+        width: calc(100% - 20px);
+        height: 1px;
+        margin: 0px 10px !important;
+      }
+      .no-margin {
+        margin: 0px;
+      }
+
+      .errors {
+        position: fixed;
+        left: 0px;
+        right: 0px;
+        bottom: 0px;
+        padding: 25px;
+      }
+      .error {
+        display: flex;
+        background-color: rgb(200, 100, 100);
+        min-height: 50px;
+        padding: 10px 25px;
+        margin-top: 10px;
+        border-radius: 10px;
+        box-shadow: 0px 0px 10px 0px rgba(200, 200, 200, 0.5);
+        transition: opacity 0.5s;
+      }
+      .error-active {
+        opacity: 0;
+      }
+      .error-text {
+        margin: 0px;
+        line-height: 50px;
+        font-weight: 500;
+        color: rgb(255, 255, 255);
+      }
+      .error-icon-container {
+        display: flex;
+        justify-content: center;
+        flex-direction: column;
+      }
+      .error-icon {
+        width: 50px;
+        height: 50px;
+        margin-right: 25px;
+      }
+    </style>
+  </head>
+  <body>
+
+    <div class="header">
+      <div class="header-logo-container"><a href="https://quiz.simplexshotz.tk/index.html"><img class="header-logo" src="../resources/requiz-icon.png"></a></div>
+      <div class="header-text-container"><h1 class="header-text">ReQuiz</h1></div>
+      <div class="header-links">
+        <div class="dropdown-container">
+          <div class="dropdown"><div class="dropdown-text">Quizzes</div><div class="down-arrow"></div></div>
+          <div class="spacer"></div>
+          <div class="dropdown-list">
+            <div class="dropdown-item" id="dropdown-item-new-quiz">Quiz Editor</div>
+            <div class="spacer"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="content">
+      <div class="quizplayer">
+        <div class="quizplayer-title">
+          <h1 class="quizplayer-name"></h1>
+          <p class="quizplayer-questions no-margin"></p>
+        </div>
+        <div class="questions">
+        </div>
+        <div class="finish-quiz" onclick="check()">
+          <h1 class="no-margin">✓ Finish Quiz</h1>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+
+    </div>
+
+    <div class="errors"></div>
+
+    <script>
+
+      // Firebase Configuration:
+      var firebaseConfig = {
+        apiKey: "AIzaSyBrg6aS2Guc3b4pnmt7hYVdJ7pQY-DS61E",
+        authDomain: "ss-requiz.firebaseapp.com",
+        databaseURL: "https://ss-requiz.firebaseio.com",
+        projectId: "ss-requiz",
+        storageBucket: "ss-requiz.appspot.com",
+        messagingSenderId: "1058999305226",
+        appId: "1:1058999305226:web:7fd71e16621777c75b4bf3"
+      };
+
+      firebase.initializeApp(firebaseConfig);
+
+      let database = firebase.database();
+
+      let ref = {
+        quizzes: database.ref("quizzes")
+      };
+
+      let quiz = {};
+
+      window.addEventListener("load", function() {
+        ref.quizzes.once("value", function(data) {
+          let d = data.val();
+
+          for (let i in d) {
+            let el = document.createElement("div");
+            el.innerHTML = `<div class="dropdown-item" class="dropdown-item" onclick="openQuiz('${i}')">${d[i].name}</div>`;
+            document.getElementsByClassName("dropdown-list")[0].appendChild(el);
+          }
+        });
+
+        let quizName = getQueries().quiz;
+        ref.quizzes.once("value", function(data) {
+          let d = data.val();
+
+          if (d[quizName]) { // Quiz exists!
+            // Update title text:
+            document.getElementsByClassName("quizplayer-name")[0].innerHTML = quizName;
+            let questionLength = (d[quizName].options.questionsToShow ? d[quizName].options.questionsToShow : d[quizName].questions.length);
+            document.getElementsByClassName("quizplayer-questions")[0].innerHTML = questionLength + " Question" + (questionLength !== 1 ? "s" : "");
+
+            // Get/randomize questions:
+            let questions = [];
+            let tempQuestions = [];
+            for (let i = 0; i < d[quizName].questions.length; i++) {
+              tempQuestions.push({
+                question: d[quizName].questions[i].question,
+                imageURI: d[quizName].questions[i].imageURI,
+                answers: d[quizName].questions[i].answers,
+                selected: -1,
+                correctAnswers: d[quizName].questions[i].correctAnswers
+              });
+            }
+            if (d[quizName].options.randomizeQuestionOrder) {
+              for (let i = 0; i < questionLength; i++) {
+                questions.push(tempQuestions.splice(Math.floor(Math.random() * tempQuestions.length), 1)[0]);
+              }
+            } else {
+              for (let i = 0; i < questionLength; i++) {
+                questions.push(tempQuestions.splice(0, 1)[0]);
+              }
+            }
+
+            // Update quiz object:
+            quiz = {
+              name: quizName,
+              options: d[quizName].options,
+              questions: questions
+            };
+
+            let letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+            // Display questions:
+            for (let i = 0; i < questions.length; i++) {
+              let answersText = "";
+              for (let j = 0; j < questions[i].answers.length; j++) {
+                answersText += `
+                  <div class="option" onclick="selectOption(${i}, ${j}, this)">
+                    <div class="option-number">${letters[j % 26]}</div>
+                    <div class="option-text-container">
+                      <div class="option-text">${questions[i].answers[j]}</div>
+                    </div>
+                  </div>
+                `;
+              }
+
+              let el = document.createElement("div");
+              el.innerHTML = `
+                <div class="question">
+                  <h1>Question ${i + 1}: ${questions[i].question}</h1>
+                  ${(questions[i].imageURI !== undefined && questions[i].imageURI !== "") ? `<img class="question-image" src="${questions[i].imageURI}">` : ""}
+                  <div class="options">
+                    ${answersText}
+                  </div>
+                </div>
+              `;
+
+              document.getElementsByClassName("questions")[0].appendChild(el);
+            }
+
+          } else { // Quiz does not exist
+            error("This quiz does not exist!", function() {
+              window.open("https://quiz.simplexshotz.tk/index.html", "_self");
+            });
+          }
+        })
+      });
+
+      function selectOption(Qi, Ai, el) {
+        // Deselect all other options (aside from the one being clicked on):
+        for (let i = 1; i < el.parentNode.childNodes.length; i += 2) {
+          if ((i - 1) / 2 !== Ai) {
+            if (el.parentNode.childNodes[i].childNodes[1].classList.contains("option-number-active")) {
+              el.parentNode.childNodes[i].childNodes[1].classList.remove("option-number-active");
+            }
+          }
+        }
+        // Toggle the option being clicked on:
+        if (el.childNodes[1].classList.contains("option-number-active")) { // deselect
+          el.childNodes[1].classList.remove("option-number-active");
+          quiz.questions[Qi].selected = -1;
+        } else { // select
+          el.childNodes[1].classList.add("option-number-active");
+          quiz.questions[Qi].selected = Ai;
+        }
+      }
+
+      function check() {
+        // Verify that the user has selected an answer for all of the questions
+        let answeredAllQuestions = true;
+        for (let i = 0; i < quiz.questions.length; i++) {
+          if (quiz.questions[i].selected === -1) { // Have not answered all questions
+            error("You haven't answered Question " + (i + 1) + " yet!");
+            answeredAllQuestions = false;
+          }
+        }
+        if (answeredAllQuestions) { // Have answered all questions
+
+          window.scrollTo(0, 0);
+
+          document.getElementsByClassName("finish-quiz")[0].parentNode.removeChild(document.getElementsByClassName("finish-quiz")[0]);
+
+          let score = 0;
+          for (let i = 0; i < quiz.questions.length; i++) {
+            if (quiz.questions[i].correctAnswers.indexOf(quiz.questions[i].selected) !== -1) { // Question was answered correctly!
+              document.getElementsByClassName("questions")[0].childNodes[i + 1].childNodes[1].childNodes[1].style.color = "rgb(0, 200, 0)";
+              document.getElementsByClassName("questions")[0].childNodes[i + 1].childNodes[1].childNodes[1].innerText = "✓ " + document.getElementsByClassName("questions")[0].childNodes[i + 1].childNodes[1].childNodes[1].innerText;
+              score++;
+            } else { // Question was answered incorrectly!
+              document.getElementsByClassName("questions")[0].childNodes[i + 1].childNodes[1].childNodes[1].style.color = "rgb(200, 0, 0)";
+              document.getElementsByClassName("questions")[0].childNodes[i + 1].childNodes[1].childNodes[1].innerText = "✗ " + document.getElementsByClassName("questions")[0].childNodes[i + 1].childNodes[1].childNodes[1].innerText;
+            }
+          }
+          document.getElementsByClassName("quizplayer-name")[0].innerText += " (Results)";
+          document.getElementsByClassName("quizplayer-questions")[0].innerText = score + " / " + quiz.questions.length + " Correct";
+        }
+      }
+
+      function getQueries() {
+
+        let url = window.location.href;
+        let queries = url.split("?");
+
+        queries.splice(0, 1);
+        queries = queries.join("?");
+        queries = queries.split("&");
+
+        let finalQueries = {};
+        for (let i = 0; i < queries.length; i++) {
+          finalQueries[queries[i].split("=")[0]] = decodeURI(queries[i].split("=")[1]);
+        }
+
+        return finalQueries;
+      }
+
+      function openQuiz(i) {
+        window.open("https://quiz.simplexshotz.tk/quiz/index.html?quiz=" + i, "_self");
+      }
+
+      document.getElementsByClassName("dropdown")[0].addEventListener("click", function() {
+        toggle("down-arrow");
+        toggle("dropdown-list");
+        toggle("dropdown-container");
+      });
+
+      document.getElementById("dropdown-item-new-quiz").addEventListener("click", function() {
+        window.open("https://quiz.simplexshotz.tk/quiz-creator/index.html", "_self");
+      });
+
+      function toggle(cl, oel) {
+        let el = oel || document.getElementsByClassName(cl)[0];
+
+        let clA = cl + "-active";
+        if (el.classList.contains(clA)) {
+          el.classList.remove(clA);
+        } else {
+          el.classList.add(clA);
+        }
+
+      }
+
+      let errors = [];
+      function error(txt, callback) {
+        errors.push(txt);
+        let el = document.createElement("div");
+        el.innerHTML = `<div class="error"><div class="error-icon-container"><img class="error-icon" src="../resources/requiz-alert.png"></div><h1 class="error-text">${txt}</h1></div>`;
+        document.getElementsByClassName("errors")[0].appendChild(el);
+        setTimeout(function() {
+          toggle("error", el.childNodes[0]);
+          setTimeout(function() {
+            el.parentNode.removeChild(el);
+            callback();
+          }, 500);
+        }, 3000);
+      }
+
+    </script>
+  </body>
+</html>

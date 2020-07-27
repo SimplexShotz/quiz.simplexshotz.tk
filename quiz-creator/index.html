@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ReQuiz | Quiz Editor</title>
+    <link rel="icon" href="../resources/requiz-icon.png">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;500;900&display=swap" rel="stylesheet">
+
+    <script src="https://www.gstatic.com/firebasejs/7.17.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/7.17.1/firebase-database.js"></script>
+
+    <style>
+      body {
+        background-color: rgb(255, 255, 255);
+        margin: 0px;
+        padding: 0px;
+        font-family: "Roboto";
+      }
+
+      h1 {
+        margin-top: 0px;
+      }
+      p {
+        font-size: 16pt;
+        font-weight: 300;
+      }
+
+      .header {
+        position: sticky;
+        top: 0px;
+        background-color: rgb(255, 255, 255);
+        color: rgb(50, 50, 50);
+        width: calc(100% - 100px);
+        height: 50px;
+        padding: 10px 50px;
+        border-bottom: 1px solid rgb(240, 240, 240);
+        display: flex;
+        z-index: 1;
+      }
+      .header-logo {
+        width: 50px;
+        height: 50px;
+        margin-right: 25px;
+      }
+      .header-text-container {
+        flex-grow: 1;
+      }
+      .header-text {
+        margin: 0px;
+        line-height: 50px;
+      }
+      .header-links div {
+        margin: 0px;
+        line-height: 50px;
+        font-size: 16pt;
+      }
+      .dropdown-container-active {
+        border-radius: 10px;
+        box-shadow: 0px 0px 10px 0px rgba(200, 200, 200, 0.5);
+      }
+      .dropdown {
+        display: flex;
+        padding: 0px 12px;
+        border-radius: 10px;
+        transition: box-shadow 0.25s, background-color 0.25s;
+        user-select: none;
+      }
+      .dropdown-text {
+        padding-right: 10px;
+      }
+      .down-arrow {
+        width: 10px;
+        height: 10px;
+        border-right: 2px solid rgb(0, 0, 0);
+        border-bottom: 2px solid rgb(0, 0, 0);
+        transform: translateY(16px) rotate(45deg);
+        transition: transform 0.5s;
+      }
+      .down-arrow-active {
+        transform: translateY(22.8px) rotate(225deg);
+      }
+      .dropdown-list {
+        display: none;
+        background-color: rgb(255, 255, 255);
+        border-radius: 10px;
+        flex-direction: column;
+      }
+      .dropdown-list-active {
+        display: flex;
+      }
+      .dropdown-item {
+        padding: 0px 12px;
+        border-radius: 10px;
+        transition: box-shadow 0.25s, background-color 0.25s;
+        user-select: none;
+        flex-direction: column;
+      }
+      .dropdown:hover, .dropdown-item:hover {
+        cursor: pointer;
+        box-shadow: 0px 0px 10px 0px rgba(200, 200, 200, 0.5);
+      }
+      .dropdown:active, .dropdown-item:active {
+        background-color: rgb(250, 250, 250);
+      }
+
+      .content {
+        background-color: rgb(255, 255, 255);
+        padding: 50px 20%;
+      }
+
+      .quizcreator-options {
+        display: flex;
+        justify-content: center;
+        flex-direction: row;
+        padding-bottom: 20px;
+      }
+      .quizcreator-option {
+        padding: 10px 20px;
+        text-align: center;
+      }
+
+      .quizcreator-title, .quizcreator-options, .question, .new-question, .create-quiz {
+        padding: 20px;
+        margin-top: 20px;
+        border-radius: 10px;
+        box-shadow: 0px 0px 10px 0px rgba(200, 200, 200, 0.5);
+        user-select: none;
+        flex-direction: column;
+      }
+      .quizcreator-name, .question-question {
+        width: calc(100% - 12px);
+        padding: 5px;
+        font-size: 14pt;
+      }
+      .question-question:focus {
+        outline: none;
+      }
+      .question-image-display {
+        max-width: 50%;
+        max-height: 100px;
+      }
+      .question-answers-container {
+        display: flex;
+      }
+      .question-answers {
+        flex-grow: 1;
+      }
+      .question-answer {
+        margin-bottom: 5px;
+      }
+      .question-answer-input {
+        width: calc(80% - 12px);
+        padding: 5px;
+        font-size: 14pt;
+      }
+      .question-answer-input:focus {
+        outline: none;
+      }
+      .question-answer-correct {
+        margin-right: 10px;
+      }
+      .question-answers-note {
+        display: flex;
+        width: 40%;
+        justify-content: center;
+        flex-direction: column;
+      }
+      .question-answers-note p {
+        font-size: 12pt;
+        margin: 0px;
+      }
+
+      .new-question, .create-quiz {
+        transition: background-color 0.25s;
+      }
+      .new-question:hover, .create-quiz:hover {
+        cursor: pointer;
+      }
+      .new-question:active, .create-quiz:active {
+        background-color: rgb(250, 250, 250);
+      }
+
+      .spacer {
+        background-color: rgb(240, 240, 240);
+        width: calc(100% - 20px);
+        height: 1px;
+        margin: 0px 10px !important;
+      }
+      .no-margin {
+        margin: 0px;
+      }
+
+      .errors {
+        position: fixed;
+        left: 0px;
+        right: 0px;
+        bottom: 0px;
+        padding: 25px;
+      }
+      .error {
+        display: flex;
+        background-color: rgb(200, 100, 100);
+        min-height: 50px;
+        padding: 10px 25px;
+        margin-top: 10px;
+        border-radius: 10px;
+        box-shadow: 0px 0px 10px 0px rgba(200, 200, 200, 0.5);
+        transition: opacity 0.5s;
+      }
+      .error-active {
+        opacity: 0;
+      }
+      .error-text {
+        margin: 0px;
+        line-height: 50px;
+        font-weight: 500;
+        color: rgb(255, 255, 255);
+      }
+      .error-icon-container {
+        display: flex;
+        justify-content: center;
+        flex-direction: column;
+      }
+      .error-icon {
+        width: 50px;
+        height: 50px;
+        margin-right: 25px;
+      }
+    </style>
+  </head>
+  <body>
+
+    <div class="header">
+      <div class="header-logo-container"><a href="https://quiz.simplexshotz.tk/index.html"><img class="header-logo" src="../resources/requiz-icon.png"></a></div>
+      <div class="header-text-container"><h1 class="header-text">ReQuiz</h1></div>
+      <div class="header-links">
+        <div class="dropdown-container">
+          <div class="dropdown"><div class="dropdown-text">Quizzes</div><div class="down-arrow"></div></div>
+          <div class="spacer"></div>
+          <div class="dropdown-list">
+            <div class="dropdown-item" id="dropdown-item-new-quiz">Quiz Editor</div>
+            <div class="spacer"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="content">
+      <div class="quizcreator">
+        <div class="quizcreator-title">
+          <h1>Quiz Editor</h1>
+          <input class="quizcreator-name" type="text" placeholder="Quiz Name" onkeyup="updateName(this)">
+        </div>
+        <div class="quizcreator-options">
+          <h1 class="no-margin">Options</h1>
+          <div class="quizcreator-option">
+            <p>Randomize Question Order:</p>
+            <input type="checkbox" onclick="updateOption('randomizeQuestionOrder', this)">
+          </div>
+          <div class="quizcreator-option">
+            <p>Questions to Show (leave as "0" to show all):</p>
+            <input type="number" onchange="updateOption('questionsToShow', this)" value="0">
+          </div>
+        </div>
+        <div class="questions">
+        </div>
+        <div class="new-question">
+          <h1 class="no-margin">+ New Question</h1>
+        </div>
+        <div class="create-quiz">
+          <h1 class="no-margin">✓ Create Quiz</h1>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+
+    </div>
+
+    <div class="errors"></div>
+
+    <script>
+
+      // Firebase Configuration:
+      var firebaseConfig = {
+        apiKey: "AIzaSyBrg6aS2Guc3b4pnmt7hYVdJ7pQY-DS61E",
+        authDomain: "ss-requiz.firebaseapp.com",
+        databaseURL: "https://ss-requiz.firebaseio.com",
+        projectId: "ss-requiz",
+        storageBucket: "ss-requiz.appspot.com",
+        messagingSenderId: "1058999305226",
+        appId: "1:1058999305226:web:7fd71e16621777c75b4bf3"
+      };
+
+      firebase.initializeApp(firebaseConfig);
+
+      let database = firebase.database();
+
+      let ref = {
+        quizzes: database.ref("quizzes")
+      };
+
+      var quiz = {
+        name: "",
+        options: {
+          randomizeQuestionOrder: false,
+          questionsToShow: 0
+        },
+        questions: []
+      };
+
+      window.addEventListener("load", function() {
+        ref.quizzes.once("value", function(data) {
+          let d = data.val();
+
+          for (let i in d) {
+            let el = document.createElement("div");
+            el.innerHTML = `<div class="dropdown-item" class="dropdown-item" onclick="openQuiz('${i}')">${d[i].name}</div>`;
+            document.getElementsByClassName("dropdown-list")[0].appendChild(el);
+          }
+        });
+      });
+
+      function openQuiz(i) {
+        window.open("https://quiz.simplexshotz.tk/quiz/index.html?quiz=" + i, "_self");
+      }
+
+      document.getElementsByClassName("dropdown")[0].addEventListener("click", function() {
+        toggle("down-arrow");
+        toggle("dropdown-list");
+        toggle("dropdown-container");
+      });
+
+      document.getElementsByClassName("new-question")[0].addEventListener("click", function() {
+        quiz.questions.push({
+          question: "",
+          imageURI: "",
+          answers: [""],
+          correctAnswers: []
+        });
+        let newEl = document.createElement("div");
+        newEl.innerHTML = `
+          <div class="question">
+            <h1>Question ${quiz.questions.length}</h1>
+            <h2>Question:</h2>
+            <input class="question-question" type="text" placeholder="Question" onkeyup="updateQuestion(${quiz.questions.length - 1}, this);">
+            <h2>Image (Optional):</h2>
+            <div class="question-image-container">
+              <input class="question-image" type="file" onchange="updateImage(${quiz.questions.length - 1}, this)">
+              <div class="question-image-display-container" style="display: none;">
+                <br><img class="question-image-display" src="">
+              </div>
+            </div>
+            <h2>Answers:</h2>
+            <div class="question-answers-container">
+              <div class="question-answers">
+                <div class="question-answer">
+                  <input class="question-answer-correct" type="checkbox" title="This is a correct answer." onclick="updateCorrect(${quiz.questions.length - 1}, 0, this)">
+                  <input class="question-answer-input" type="text" placeholder="Answer 1" onkeyup="updateAnswer(${quiz.questions.length - 1}, 0, this)">
+                </div>
+              </div>
+              <div class="question-answers-note">
+                ${quiz.questions.length === 1 ? "<p>Note: Empty fields will be deleted when the quiz is created.</p>" : ""}
+              </div>
+            </div>
+          </div>
+        `;
+        document.getElementsByClassName("questions")[0].appendChild(newEl);
+      });
+      document.getElementsByClassName("create-quiz")[0].addEventListener("click", function() {
+        ref.quizzes.once("value", function(data) {
+          let d = data.val();
+
+          // Quiz verification:
+          let verified = true;
+          if (quiz.name !== "") { // Verify that it has a name
+            let nameExists = false;
+            for (let i in d) {
+              if (d[i].name === quiz.name) {
+                nameExists = true;
+                break;
+              }
+            }
+
+            if (!nameExists) { // Verify that the name does not already exist
+              if (quiz.questions.length !== 0) { // Verify that the quiz has at least 1 question
+                for (let i = 0; i < quiz.questions.length; i++) {
+                  if (quiz.questions[i].question === "") { // Verify that all questions have a question
+                    error("Question " + (i + 1) + "'s question field is blank.");
+                    verified = false;
+                  } else {
+                    let allBlankAnswers = true;
+                    for (let j = 0; j < quiz.questions[i].answers.length; j++) {
+                      if (quiz.questions[i].answers[j] !== "") {
+                        allBlankAnswers = false;
+                        break;
+                      }
+                    }
+                    if (!allBlankAnswers) { // Verify that there is at least one actual answer
+                      if (quiz.questions[i].correctAnswers.length === 0) { // There are no correct answers
+                        error("You must select at least 1 correct answer for Question " + (i + 1) + "!");
+                        verified = false;
+                      } else {
+                        let allCorrectAnswersBlank = true;
+                        for (let k = 0; k < quiz.questions[i].correctAnswers.length; k++) {
+                          if (quiz.questions[i].answers[quiz.questions[i].correctAnswers[k]] !== "") {
+                            allCorrectAnswersBlank = false;
+                          }
+                        }
+                        if (allCorrectAnswersBlank) { // All correct answers are blank
+                          error("You must select at least 1 correct answer for Question " + (i + 1) + " that isn't blank!");
+                          verified = false;
+                        }
+                      }
+                    } else { // All answers are blank
+                      error("All of Question " + (i + 1) + "'s answer fields are blank.");
+                      verified = false;
+                    }
+                  }
+                }
+              } else { // Quiz has no questions
+                error("You can't create a quiz with no questions! Add some questions and try again.");
+                verified = false;
+              }
+            } else { // Name already exists
+              error("A quiz with that name already exists! Use a more unique name and try again.");
+              verified = false;
+            }
+          } else { // Does not have a name
+            error("Enter a name for the quiz!");
+            verified = false;
+          }
+          if (verified) {
+            // Remove all empty answers:
+            for (let i = 0; i < quiz.questions.length; i++) {
+              for (let j = 0; j < quiz.questions[i].answers.length; j++) {
+                if (quiz.questions[i].answers[j] === "") {
+                  quiz.questions[i].answers.splice(j, 1);
+                  if (quiz.questions[i].correctAnswers.indexOf(j) !== -1) {
+                    quiz.questions[i].correctAnswers.splice(quiz.questions[i].correctAnswers.indexOf(j), 1);
+                  }
+                }
+              }
+            }
+
+            if (quiz.options.questionsToShow > quiz.questions.length) {
+              quiz.options.questionsToShow = quiz.questions.length;
+            }
+
+            ref.quizzes.child(quiz.name).set(quiz);
+
+            // Load the quiz when it has been created:
+            ref.quizzes.on("value", function(data) {
+              let d = data.val();
+
+              if (d[quiz.name]) {
+                window.open("https://quiz.simplexshotz.tk/quiz/index.html?quiz=" + quiz.name, "_self");
+              }
+            })
+          }
+        });
+      });
+
+
+      document.getElementById("dropdown-item-new-quiz").addEventListener("click", function() {
+        window.open("https://quiz.simplexshotz.tk/quiz-creator/index.html", "_self");
+      });
+
+      function toggle(cl, oel) {
+        let el = oel || document.getElementsByClassName(cl)[0];
+
+        let clA = cl + "-active";
+        if (el.classList.contains(clA)) {
+          el.classList.remove(clA);
+        } else {
+          el.classList.add(clA);
+        }
+
+      }
+
+      function updateImage(Qi, el) {
+
+        var reader = new FileReader();
+
+        reader.onloadend = function() {
+          el.parentNode.childNodes[3].style.display = "block";
+          el.parentNode.childNodes[3].childNodes[2].src = reader.result;
+
+          quiz.questions[Qi].imageURI = reader.result;
+        };
+
+        if (el.files[0]) {
+          reader.readAsDataURL(el.files[0]);
+        } else {
+          el.parentNode.childNodes[3].style.display = "none";
+          el.parentNode.childNodes[3].childNodes[2].src = "";
+
+          quiz.questions[Qi].imageURI = "";
+        }
+
+      }
+
+      function updateName(el) {
+        quiz.name = el.value;
+      }
+      function updateOption(option, el) {
+        switch(option) {
+          case "randomizeQuestionOrder":
+            quiz.options.randomizeQuestionOrder = el.checked;
+          break;
+          case "questionsToShow":
+            quiz.options.questionsToShow = Number(el.value);
+          break;
+        }
+      }
+      function updateQuestion(i, el) {
+        quiz.questions[i].question = el.value;
+      }
+      function updateCorrect(Qi, Ai, el) {
+        if (quiz.questions[Qi].correctAnswers.indexOf(Ai) === -1 && el.checked) {
+          quiz.questions[Qi].correctAnswers.push(Ai);
+        } else if (quiz.questions[Qi].correctAnswers.indexOf(Ai) !== -1 && !el.checked) {
+          quiz.questions[Qi].correctAnswers.splice(quiz.questions[Qi].correctAnswers.indexOf(Ai), 1);
+        }
+      }
+      function updateAnswer(Qi, Ai, el) { // question index / answer index
+        quiz.questions[Qi].answers[Ai] = el.value;
+        if (el.value !== "" && Ai === quiz.questions[Qi].answers.length - 1) {
+          quiz.questions[Qi].answers.push("");
+          let newEl = document.createElement("div");
+          newEl.innerHTML = `
+            <div class="question-answer">
+              <input class="question-answer-correct" type="checkbox" title="This is a correct answer." onclick="updateCorrect(${Qi}, ${quiz.questions[Qi].answers.length - 1}, this)">
+              <input class="question-answer-input" type="text" placeholder="Answer ${quiz.questions[Qi].answers.length}" onkeyup="updateAnswer(${Qi}, ${quiz.questions[Qi].answers.length - 1}, this)">
+            </div>
+          `;
+          el.parentNode.parentNode.appendChild(newEl);
+        }
+      }
+
+      let errors = [];
+      function error(txt) {
+        errors.push(txt);
+        let el = document.createElement("div");
+        el.innerHTML = `<div class="error"><div class="error-icon-container"><img class="error-icon" src="../resources/requiz-alert.png"></div><h1 class="error-text">${txt}</h1></div>`;
+        document.getElementsByClassName("errors")[0].appendChild(el);
+        setTimeout(function() {
+          toggle("error", el.childNodes[0]);
+          setTimeout(function() {
+            el.parentNode.removeChild(el);
+          }, 500);
+        }, 3000);
+      }
+
+    </script>
+  </body>
+</html>
