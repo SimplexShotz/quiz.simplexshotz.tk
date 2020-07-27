@@ -127,7 +127,7 @@
         <div class="new-question">
           <h1 class="no-margin">+ New Question</h1>
         </div>
-        <div class="create-quiz">
+        <div class="create-quiz" onclick="createQuiz()">
           <h1 class="no-margin">✓ Create Quiz</h1>
         </div>
       </div>
@@ -227,7 +227,7 @@
         `;
         document.getElementsByClassName("questions")[0].appendChild(newEl);
       });
-      document.getElementsByClassName("create-quiz")[0].addEventListener("click", function() {
+      function createQuiz() {
         ref.quizzes.once("value", function(data) {
           let d = data.val();
 
@@ -319,7 +319,7 @@
             })
           }
         });
-      });
+      }
 
 
       document.getElementById("dropdown-item-new-quiz").addEventListener("click", function() {
