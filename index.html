@@ -12,8 +12,28 @@
 
     <style>
 
-      .content-welcome {
-        max-width: 750px;
+      .quizfinder-welcome, .quizfinder-quiz {
+        padding: 20px;
+        margin-top: 20px;
+        border-radius: 10px;
+        box-shadow: 0px 0px 10px 0px rgba(200, 200, 200, 0.5);
+        user-select: none;
+      }
+
+      .quizfinder-quiz {
+        transition: background-color 0.25s;
+      }
+      .quizfinder-quiz:hover {
+        cursor: pointer;
+      }
+      .quizfinder-quiz:active {
+        background-color: rgb(250, 250, 250);
+      }
+
+      .small {
+        color: rgb(200, 200, 200);
+        margin-bottom: 0px;
+        font-size: 12pt;
       }
 
     </style>
@@ -38,15 +58,13 @@
     </div>
 
     <div class="content">
-      <div class="content-welcome">
+      <div class="quizfinder-welcome">
         <h1>Welcome to ReQuiz!</h1>
         <p>Check out a list of all the quizzes on this site by selecting the "Quizzes" dropdown in the header, or view the most recent quizzes below!</p>
-        <p>V1.0.1</p>
       </div>
-    </div>
+      <div class="quizfinder-quizzes">
 
-    <div class="footer">
-
+      </div>
     </div>
 
     <script>
@@ -74,16 +92,64 @@
         ref.quizzes.once("value", function(data) {
           let d = data.val();
 
+          let quizzes = []; // Convert from object to array
           for (let i in d) {
-            let el = document.createElement("div");
-            el.innerHTML = `<div class="dropdown-item" class="dropdown-item" onclick="openQuiz('${i}')">${d[i].name}</div>`;
-            document.getElementsByClassName("dropdown-list")[0].appendChild(el);
+            d[i].i = i;
+            quizzes.push(d[i]);
+          }
+
+          quicksort(quizzes, 0, quizzes.length - 1, "created"); // Sort by date/time created
+
+          for (let i = 0; i < quizzes.length; i++) {
+            let dropdownEl = document.createElement("div");
+            dropdownEl.innerHTML = `
+              <div class="dropdown-item" class="dropdown-item" onclick="openQuiz('${quizzes[i].i}')">${quizzes[i].name}</div>
+            `;
+            document.getElementsByClassName("dropdown-list")[0].appendChild(dropdownEl);
+
+            let questionLength = (quizzes[i].options.questionsToShow ? quizzes[i].options.questionsToShow : quizzes[i].questions.length);
+
+            let quizEl = document.createElement("div");
+            quizEl.innerHTML = `
+              <div class="quizfinder-quiz" onclick="openQuiz('${quizzes[i].i}')">
+                <h1 class="quizfinder-name">${quizzes[i].name}</h1>
+                <p class="quizfinder-questions no-margin">${questionLength} Questions</p>
+                <p class="quizfinder-time small">Created ${convertToTimeString(new Date().getTime() - quizzes[i].created)} ago</p>
+              </div>
+            `;
+            document.getElementsByClassName("quizfinder-quizzes")[0].appendChild(quizEl);
           }
         });
       });
 
       function openQuiz(i) {
         window.open("https://quiz.simplexshotz.tk/quiz/index.html?quiz=" + i, "_self");
+      }
+
+      function convertToTimeString(time) {
+
+        let value = 0;
+        let unit = "";
+
+        if (time < 60 * 1000) { // Less than 1 min ago
+          value = Math.floor(time / 1000);
+          unit = "second";
+        } else if (time < 60 * 60 * 1000) { // Less than 1 hour ago
+          value = Math.floor(time / (60 * 1000));
+          unit = "minute";
+        } else if (time < 24 * 60 * 60 * 1000) { // Less than 1 day ago
+          value = Math.floor(time / (60 * 60 * 1000));
+          unit = "hour";
+        } else if (time < 365 * 24 * 60 * 60 * 1000) { // Less than 1 year ago
+          value = Math.floor(time / (24 * 60 * 60 * 1000));
+          unit = "day";
+        } else { // More than 1 year ago
+          value = Math.floor(time / (365 * 24 * 60 * 60 * 1000));
+          unit = "year";
+        }
+
+        return value + " " + unit + (value !== 1 ? "s" : "");
+
       }
 
       document.getElementsByClassName("dropdown")[0].addEventListener("click", function() {
@@ -106,6 +172,32 @@
           el.classList.add(clA);
         }
 
+      }
+
+      function partition(arr, lo, hi, by) {
+        var pivot = (by ? arr[hi][by] : arr[hi]);
+        var i = lo;
+        for (var j = lo; j < hi; j++) {
+          if ((by ? arr[j][by] : arr[j]) > pivot) {
+            if (i !== j) {
+              var t = arr[j];
+              arr[j] = arr[i];
+              arr[i] = t;
+            }
+            i++;
+          }
+        }
+        var t = arr[hi];
+        arr[hi] = arr[i];
+        arr[i] = t;
+        return i;
+      }
+      function quicksort(arr, lo, hi, by) {
+        if (lo < hi) {
+          var p = partition(arr, lo, hi, by);
+          quicksort(arr, lo, p - 1, by);
+          quicksort(arr, p + 1, hi, by);
+        }
       }
 
     </script>

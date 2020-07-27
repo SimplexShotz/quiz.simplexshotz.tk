@@ -133,10 +133,6 @@
       </div>
     </div>
 
-    <div class="footer">
-
-    </div>
-
     <div class="errors"></div>
 
     <script>
@@ -166,7 +162,8 @@
           randomizeQuestionOrder: false,
           questionsToShow: 0
         },
-        questions: []
+        questions: [],
+        created: 0
       };
 
       window.addEventListener("load", function() {
@@ -306,6 +303,8 @@
             if (quiz.options.questionsToShow > quiz.questions.length) {
               quiz.options.questionsToShow = quiz.questions.length;
             }
+
+            quiz.created = new Date().getTime();
 
             ref.quizzes.child(quiz.name).set(quiz);
 
