@@ -13,13 +13,17 @@ p {
   font-size: 16pt;
   font-weight: 300;
 }
+a {
+  color: rgb(0, 0, 0);
+  text-decoration: none;
+}
 
 .header {
   display: flex;
   position: sticky;
   top: 0px;
   background-color: rgb(255, 255, 255);
-  color: rgb(50, 50, 50);
+  color: rgb(0, 0, 0);
   width: calc(100% - 50px);
   height: 115px;
   padding: 10px 25px;
@@ -115,6 +119,9 @@ p {
 .no-margin {
   margin: 0px;
 }
+.no-margin-bottom {
+  margin-bottom: 0px;
+}
 
 .errors {
   position: fixed;
@@ -154,6 +161,10 @@ p {
   margin-right: 25px;
 }
 
+.desktop-only {
+  display: none;
+}
+
 @media (min-width: 768px) {
 
   .header {
@@ -173,6 +184,10 @@ p {
 
   .content {
     padding: 50px 20%;
+  }
+
+  .desktop-only {
+    display: block;
   }
 
 }

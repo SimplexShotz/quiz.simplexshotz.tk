@@ -30,6 +30,17 @@
         background-color: rgb(250, 250, 250);
       }
 
+      .quizfinder-title {
+        display: flex;
+      }
+      .quizfinder-title h1 {
+        flex-grow: 1;
+      }
+      .quizfinder-title a {
+        margin: 0px;
+        font-weight: 300;
+      }
+
       .small {
         color: rgb(200, 200, 200);
         margin-bottom: 0px;
@@ -42,8 +53,8 @@
 
     <div class="header">
       <div class="header-title">
-        <div class="header-logo-container"><img class="header-logo" src="resources/requiz-icon.png"></div>
-        <div class="header-text-container"><h1 class="header-text">ReQuiz</h1></div>
+        <div class="header-logo-container"><a href="https://quiz.simplexshotz.tk/index.html"><img class="header-logo" src="resources/requiz-icon.png"></a></div>
+        <div class="header-text-container"><h1 class="header-text"><a href="https://quiz.simplexshotz.tk/index.html">ReQuiz</a></h1></div>
       </div>
       <div class="header-links">
         <div class="dropdown-container">
@@ -61,6 +72,7 @@
       <div class="quizfinder-welcome">
         <h1>Welcome to ReQuiz!</h1>
         <p>Check out a list of all the quizzes on this site by selecting the "Quizzes" dropdown in the header, or view the most recent quizzes below!</p>
+        <p class="no-margin-bottom">You can always return to this page by clicking on the ReQuiz logo.</p>
       </div>
       <div class="quizfinder-quizzes">
 
@@ -112,9 +124,12 @@
             let quizEl = document.createElement("div");
             quizEl.innerHTML = `
               <div class="quizfinder-quiz" onclick="openQuiz('${quizzes[i].i}')">
-                <h1 class="quizfinder-name">${quizzes[i].name}</h1>
-                <p class="quizfinder-questions no-margin">${questionLength} Questions</p>
-                <p class="quizfinder-time small">Created ${convertToTimeString(new Date().getTime() - quizzes[i].created)} ago</p>
+                <div class="quizfinder-title">
+                  <h1 class="quizfinder-name">${quizzes[i].name}</h1>
+                  ${quizzes[i].options.editable ? `<a class="small" href="https://quiz.simplexshotz.tk/quiz-creator/index.html?quiz=${quizzes[i].i}">Edit</a>` : ``}
+                </div>
+                <p class="quizfinder-questions no-margin">${questionLength} Question${questionLength !== 1 ? "s" : ""}</p>
+                <p class="quizfinder-time small">${quizzes[i].edited ? "Edited" : "Created"} ${convertToTimeString(new Date().getTime() - quizzes[i].created)} ago</p>
               </div>
             `;
             document.getElementsByClassName("quizfinder-quizzes")[0].appendChild(quizEl);

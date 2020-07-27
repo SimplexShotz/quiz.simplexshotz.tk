@@ -83,7 +83,7 @@
     <div class="header">
       <div class="header-title">
         <div class="header-logo-container"><a href="https://quiz.simplexshotz.tk/index.html"><img class="header-logo" src="../resources/requiz-icon.png"></a></div>
-        <div class="header-text-container"><h1 class="header-text">ReQuiz</h1></div>
+        <div class="header-text-container"><h1 class="header-text"><a href="https://quiz.simplexshotz.tk/index.html">ReQuiz</a></h1></div>
       </div>
       <div class="header-links">
         <div class="dropdown-container">
@@ -327,7 +327,9 @@
           toggle("error", el.childNodes[0]);
           setTimeout(function() {
             el.parentNode.removeChild(el);
-            callback();
+            if (callback) {
+              callback();
+            }
           }, 500);
         }, 3000);
       }

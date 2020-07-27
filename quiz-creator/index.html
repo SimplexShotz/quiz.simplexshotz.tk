@@ -12,15 +12,21 @@
 
     <style>
 
-      .quizcreator-options {
-        display: flex;
-        justify-content: center;
-        flex-direction: row;
-        padding-bottom: 20px;
-      }
       .quizcreator-option {
-        padding: 10px 20px;
-        text-align: center;
+        display: flex;
+      }
+      .quizcreator-option-input-container {
+        flex-direction: column;
+      }
+      .quizcreator-option-label {
+        display: inline-block;
+        margin: 5px 0px;
+      }
+      .quizcreator-checkbox-container {
+        display: flex;
+        margin-right: 10px;
+        flex-direction: column;
+        justify-content: center;
       }
 
       .quizcreator-title, .quizcreator-options, .question, .new-question, .create-quiz {
@@ -69,7 +75,7 @@
         justify-content: center;
         flex-direction: column;
       }
-      .question-answers-note p {
+      .note {
         font-size: 12pt;
         margin: 0px;
       }
@@ -91,7 +97,7 @@
     <div class="header">
       <div class="header-title">
         <div class="header-logo-container"><a href="https://quiz.simplexshotz.tk/index.html"><img class="header-logo" src="../resources/requiz-icon.png"></a></div>
-        <div class="header-text-container"><h1 class="header-text">ReQuiz</h1></div>
+        <div class="header-text-container"><h1 class="header-text"><a href="https://quiz.simplexshotz.tk/index.html">ReQuiz</a></h1></div>
       </div>
       <div class="header-links">
         <div class="dropdown-container">
@@ -112,15 +118,25 @@
           <input class="quizcreator-name" type="text" placeholder="Quiz Name" onkeyup="updateName(this)">
         </div>
         <div class="quizcreator-options">
-          <h1 class="no-margin">Options</h1>
-          <div class="quizcreator-option">
-            <p>Randomize Question Order:</p>
-            <input type="checkbox" onclick="updateOption('randomizeQuestionOrder', this)">
+          <h1>Options</h1>
+          <div class="quizcreator-option quizcreator-option-checkbox-container">
+            <div class="quizcreator-checkbox-container">
+              <input class="quizcreator-option-checkbox" type="checkbox" title="Allows this quiz to be edited. If this is NOT selected, this quiz will not be able to be edited by anyone, including yourself." onclick="updateOption('editable', this)">
+            </div>
+            <p class="quizcreator-option-label">Editable by Anyone</p>
           </div>
-          <div class="quizcreator-option">
-            <p>Questions to Show (leave as "0" to show all):</p>
-            <input class="quizcreator-option-input" type="number" onchange="updateOption('questionsToShow', this)" value="0">
+          <div class="quizcreator-option quizcreator-option-checkbox-container">
+            <div class="quizcreator-checkbox-container">
+              <input class="quizcreator-option-checkbox" type="checkbox" title="Randomizes the order in which questions are presented." onclick="updateOption('randomizeQuestionOrder', this)">
+            </div>
+            <p class="quizcreator-option-label">Randomize Question Order</p>
           </div>
+          <div class="quizcreator-option quizcreator-option-input-container">
+            <p class="quizcreator-option-label">Questions to Show (leave as "0" to show all):</p>
+            <input class="quizcreator-option-input" type="number" title='This is how many questions will be shown each time the quiz is taken. For example, if your quiz has 10 questions, but this value is set to 5, only 5 out of the 10 quesitons will be shown each time someone takes your quiz. If you change this value, you should enable "Randomize Question Order," as otherwise, some questions may never be seen.' onchange="updateOption('questionsToShow', this)" value="0">
+          </div>
+          <br>
+          <p class="note desktop-only">Note: You can hover over checkboxes to get a more in-depth explanation for the option.</p>
         </div>
         <div class="questions">
         </div>
@@ -159,11 +175,13 @@
       var quiz = {
         name: "",
         options: {
+          editable: false,
           randomizeQuestionOrder: false,
           questionsToShow: 0
         },
         questions: [],
-        created: 0
+        created: 0,
+        edited: false
       };
 
       window.addEventListener("load", function() {
@@ -175,8 +193,45 @@
             el.innerHTML = `<div class="dropdown-item" class="dropdown-item" onclick="openQuiz('${i}')">${d[i].name}</div>`;
             document.getElementsByClassName("dropdown-list")[0].appendChild(el);
           }
+
+          // If editing a quiz:
+          let queries = getQueries();
+          if (queries.quiz) {
+            if (d[queries.quiz].options.editable) {
+              document.getElementsByClassName("quizcreator-name")[0].value = d[queries.quiz].name;
+              document.getElementsByClassName("quizcreator-option-checkbox")[0].checked = d[queries.quiz].options.editable;
+              document.getElementsByClassName("quizcreator-option-checkbox")[1].checked = d[queries.quiz].options.randomizeQuestionOrder;
+              document.getElementsByClassName("quizcreator-option-input")[0].value = d[queries.quiz].options.questionsToShow;
+
+              quiz = d[queries.quiz];
+              updateQuiz();
+
+              document.getElementsByClassName("create-quiz-text")[0].innerText = "✓ Update Quiz";
+            } else {
+              error("This quiz is not allowed to be edited.", function() {
+                window.open("https://quiz.simplexshotz.tk/index.html", "_self");
+              });
+            }
+          }
         });
       });
+
+      function getQueries() {
+
+        let url = window.location.href;
+        let queries = url.split("?");
+
+        queries.splice(0, 1);
+        queries = queries.join("?");
+        queries = queries.split("&");
+
+        let finalQueries = {};
+        for (let i = 0; i < queries.length; i++) {
+          finalQueries[queries[i].split("=")[0]] = decodeURI(queries[i].split("=")[1]);
+        }
+
+        return finalQueries;
+      }
 
       function openQuiz(i) {
         window.open("https://quiz.simplexshotz.tk/quiz/index.html?quiz=" + i, "_self");
@@ -217,13 +272,14 @@
                 </div>
               </div>
               <div class="question-answers-note">
-                ${quiz.questions.length === 1 ? "<p>Note: Empty fields will be deleted when the quiz is created.</p>" : ""}
+                ${quiz.questions.length === 1 ? "<p class='note'>Note: Empty fields will be deleted when the quiz is created.</p>" : ""}
               </div>
             </div>
           </div>
         `;
         document.getElementsByClassName("questions")[0].appendChild(newEl);
       });
+
       function createQuiz() {
         ref.quizzes.once("value", function(data) {
           let d = data.val();
@@ -239,7 +295,7 @@
               }
             }
 
-            if (!nameExists) { // Verify that the name does not already exist
+            if (!nameExists || getQueries().quiz) { // Verify that the name does not already exist
               if (quiz.questions.length !== 0) { // Verify that the quiz has at least 1 question
                 for (let i = 0; i < quiz.questions.length; i++) {
                   if (quiz.questions[i].question === "") { // Verify that all questions have a question
@@ -296,6 +352,12 @@
                   if (quiz.questions[i].correctAnswers.indexOf(j) !== -1) {
                     quiz.questions[i].correctAnswers.splice(quiz.questions[i].correctAnswers.indexOf(j), 1);
                   }
+                  // Decrement indices higher than "j":
+                  for (let k = 0; k < quiz.questions[i].correctAnswers.length; k++) {
+                    if (quiz.questions[i].correctAnswers[k] > j) {
+                      quiz.questions[i].correctAnswers[k]--;
+                    }
+                  }
                 }
               }
             }
@@ -306,21 +368,29 @@
 
             quiz.created = new Date().getTime();
 
-            ref.quizzes.child(quiz.name).set(quiz);
+            let queries = getQueries();
+            if (queries.quiz) {
+              quiz.edited = true;
+            }
+
+            ref.quizzes.child(queries.quiz ? queries.quiz : quiz.name).set(quiz);
 
             // Load the quiz when it has been created:
             ref.quizzes.on("value", function(data) {
               let d = data.val();
 
-              if (d[quiz.name]) {
-                window.open("https://quiz.simplexshotz.tk/quiz/index.html?quiz=" + quiz.name, "_self");
+              let queries = getQueries();
+              if (queries.quiz && d[queries.quiz] || d[quiz.name]) {
+                window.open("https://quiz.simplexshotz.tk/quiz/index.html?quiz=" + (queries.quiz ? queries.quiz : quiz.name), "_self");
               }
             })
           } else {
-            document.getElementsByClassName("create-quiz-text")[0].innerText = "✓ Create Quiz";
+            let queries = getQueries();
+            document.getElementsByClassName("create-quiz-text")[0].innerText = queries.quiz ? "✓ Update Quiz" : "✓ Create Quiz";
           }
         });
-        document.getElementsByClassName("create-quiz-text")[0].innerText = "Creating Quiz...";
+        let queries = getQueries();
+        document.getElementsByClassName("create-quiz-text")[0].innerText = queries.quiz ? "Updating Quiz..." : "Creating Quiz...";
       }
 
 
@@ -367,6 +437,9 @@
       }
       function updateOption(option, el) {
         switch(option) {
+          case "editable":
+            quiz.options.editable = el.checked;
+          break;
           case "randomizeQuestionOrder":
             quiz.options.randomizeQuestionOrder = el.checked;
           break;
@@ -401,8 +474,51 @@
         }
       }
 
+      function updateQuiz() {
+        document.getElementsByClassName("questions")[0].innerHTML = "";
+
+        for (let i = 0; i < quiz.questions.length; i++) {
+          let newEl = document.createElement("div");
+          let answerText = "";
+          for (let j = 0; j < quiz.questions[i].answers.length + 1; j++) {
+            answerText += `
+              <div class="question-answer">
+                <input class="question-answer-correct" type="checkbox" title="This is a correct answer." ${(j < quiz.questions[i].answers.length && quiz.questions[i].correctAnswers.indexOf(j) !== -1) ? "checked" : ""} onclick="updateCorrect(${i}, ${j}, this)">
+                <input class="question-answer-input" type="text" placeholder="Answer ${j + 1}" value="${j < quiz.questions[i].answers.length ? quiz.questions[i].answers[j] : ""}" onkeyup="updateAnswer(${i}, ${j}, this)">
+              </div>
+            `;
+          }
+          quiz.questions[i].answers.push("");
+          newEl.innerHTML = `
+            <div class="question">
+              <h1>Question ${i + 1}</h1>
+              <h2>Question:</h2>
+              <input class="question-question" type="text" placeholder="Question" value="${quiz.questions[i].question}" onkeyup="updateQuestion(${i}, this);">
+              <h2>Image (Optional):</h2>
+              <div class="question-image-container">
+                <input class="question-image" type="file" onchange="updateImage(${i}, this)">
+                <div class="question-image-display-container" style="display: ${quiz.questions[i].imageURI ? "block" : "none"};">
+                  <br><img class="question-image-display" src="${quiz.questions[i].imageURI ? quiz.questions[i].imageURI : ""}">
+                </div>
+              </div>
+              <h2>Answers:</h2>
+              <div class="question-answers-container">
+                <div class="question-answers">
+                  ${answerText}
+                </div>
+                <div class="question-answers-note">
+                  ${i === 0 ? "<p class='note'>Note: Empty fields will be deleted when the quiz is created.</p>" : ""}
+                </div>
+              </div>
+            </div>
+          `;
+          document.getElementsByClassName("questions")[0].appendChild(newEl);
+        }
+        // TODO: update answers
+      }
+
       let errors = [];
-      function error(txt) {
+      function error(txt, callback) {
         errors.push(txt);
         let el = document.createElement("div");
         el.innerHTML = `<div class="error"><div class="error-icon-container"><img class="error-icon" src="../resources/requiz-alert.png"></div><h1 class="error-text">${txt}</h1></div>`;
@@ -411,6 +527,9 @@
           toggle("error", el.childNodes[0]);
           setTimeout(function() {
             el.parentNode.removeChild(el);
+            if (callback) {
+              callback();
+            }
           }, 500);
         }, 3000);
       }
