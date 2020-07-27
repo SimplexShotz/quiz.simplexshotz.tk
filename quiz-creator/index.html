@@ -369,7 +369,8 @@
             quiz.options.randomizeQuestionOrder = el.checked;
           break;
           case "questionsToShow":
-            quiz.options.questionsToShow = Number(el.value);
+            quiz.options.questionsToShow = Number(el.value) || 0;
+            el.value = quiz.options.questionsToShow;
           break;
         }
       }
