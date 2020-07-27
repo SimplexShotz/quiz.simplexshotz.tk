@@ -110,6 +110,19 @@ a {
   padding: 25px;
 }
 
+.footer {
+  display: flex;
+  background-color: rgb(255, 255, 255);
+  color: rgb(0, 0, 0);
+  width: calc(100% - 50px);
+  height: 50px;
+  padding: 10px 25px;
+  border-top: 1px solid rgb(240, 240, 240);
+}
+.footer p:first-child {
+  flex-grow: 1;
+}
+
 .spacer {
   background-color: rgb(240, 240, 240);
   width: calc(100% - 20px);
@@ -189,6 +202,11 @@ a {
 
   .content {
     padding: 50px 20%;
+  }
+
+  .footer {
+    width: calc(100% - 100px);
+    padding: 10px 50px;
   }
 
   .desktop-only {
