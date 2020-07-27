@@ -157,7 +157,7 @@
 
           if (d[quizName]) { // Quiz exists!
             // Update title text:
-            document.getElementsByClassName("quizplayer-name")[0].innerHTML = quizName;
+            document.getElementsByClassName("quizplayer-name")[0].innerHTML = d[quizName].name;
             let questionLength = (d[quizName].options.questionsToShow ? d[quizName].options.questionsToShow : d[quizName].questions.length);
             document.getElementsByClassName("quizplayer-questions")[0].innerHTML = questionLength + " Question" + (questionLength !== 1 ? "s" : "");
 
