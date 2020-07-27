@@ -128,7 +128,7 @@
           <h1 class="no-margin">+ New Question</h1>
         </div>
         <div class="create-quiz" onclick="createQuiz()">
-          <h1 class="no-margin">✓ Create Quiz</h1>
+          <h1 class="create-quiz-text" class="no-margin">✓ Create Quiz</h1>
         </div>
       </div>
     </div>
@@ -319,6 +319,7 @@
             })
           }
         });
+        document.getElementsByClassName("create-quiz-text")[0].innerText = "Creating Quiz...";
       }
 
 
