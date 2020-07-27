@@ -20,9 +20,9 @@ p {
   top: 0px;
   background-color: rgb(255, 255, 255);
   color: rgb(50, 50, 50);
-  width: calc(100% - 100px);
+  width: calc(100% - 50px);
   height: 115px;
-  padding: 10px 50px;
+  padding: 10px 25px;
   border-bottom: 1px solid rgb(240, 240, 240);
   z-index: 1;
   flex-direction: column;
@@ -41,8 +41,11 @@ p {
   line-height: 50px;
 }
 .header-links {
-  position: relative;
+  position: absolute;
+  top: 60px;
+  max-width: calc(100% - 100px);
   margin-top: 10px;
+  z-index: 2;
 }
 .header-links div {
   margin: 0px;
@@ -153,13 +156,17 @@ p {
 @media (min-width: 768px) {
 
   .header {
+    width: calc(100% - 100px);
     height: 50px;
+    padding: 10px 50px;
     flex-direction: row;
   }
   .header-title {
     flex-grow: 1;
   }
   .header-links {
+    position: relative;
+    top: 0px;
     margin-top: 0px;
   }
 
