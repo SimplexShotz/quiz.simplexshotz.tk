@@ -20,6 +20,7 @@ a {
 textarea {
   resize: vertical;
   font-family: "Roboto";
+  font-weight: 300;
 }
 
 .header {
