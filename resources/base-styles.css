@@ -22,6 +22,10 @@ textarea {
   font-family: "Roboto";
   font-weight: 300;
 }
+input {
+  font-family: "Roboto";
+  font-weight: 300;
+}
 
 .header {
   display: flex;
