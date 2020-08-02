@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
+    <!-- TODO: store quizzes locally to reduce data usage (check against last update; if there's been an update, update the quiz) -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ReQuiz</title>
     <link rel="icon" href="../resources/requiz-icon.png">
@@ -134,6 +135,29 @@
         quizzes: database.ref("quizzes")
       };
 
+      let quizzes = null;
+      if (localStorage.getItem("quizzes")) {
+        quizzes = localStorage.getItem("quizzes");
+
+        // Update quizzes:
+        for (let i in quizzes) {
+          ref.quizzes.child(i).child("created").once("value", function(data) {
+            let lastUpdated = data.val();
+
+            if (lastUpdated > quizzes[i].created) { // Quiz has been updated since last loaded
+              ref.quizzes.child(i).once("value", function(data) { // Update quiz
+                let d = data.val();
+
+                quizzes[i] = d;
+                localStorage.setItem("quizzes", quizzes);
+              });
+            }
+
+          });
+        }
+
+      }
+
       let quiz = {};
 
       window.addEventListener("load", function() {
@@ -148,82 +172,95 @@
         });
 
         let quizName = getQueries().quiz;
-        ref.quizzes.once("value", function(data) {
-          let d = data.val();
 
-          if (d[quizName]) { // Quiz exists!
-            // Update title text:
-            document.getElementsByClassName("quizplayer-name")[0].innerHTML = d[quizName].name;
-            document.getElementsByClassName("quizplayer-name")[0].classList.remove("no-margin");
-            let questionLength = (d[quizName].options.questionsToShow ? d[quizName].options.questionsToShow : d[quizName].questions.length);
-            document.getElementsByClassName("quizplayer-questions")[0].innerHTML = questionLength + " Question" + (questionLength !== 1 ? "s" : "");
+        // Open quiz:
+        if (quizzes !== null && quizzes[quizName]) { // Quiz has been locally saved
+          openQuiz(quizName, quizzes[quizName]); // Open quiz
+        } else { // Quiz has not been locally saved
+          ref.quizzes.once("value", function(data) {
+            let d = data.val();
 
-            // Get/randomize questions:
-            let questions = [];
-            let tempQuestions = [];
-            for (let i = 0; i < d[quizName].questions.length; i++) {
-              tempQuestions.push({
-                question: d[quizName].questions[i].question,
-                imageURI: d[quizName].questions[i].imageURI,
-                answers: d[quizName].questions[i].answers,
-                selected: -1,
-                correctAnswers: d[quizName].questions[i].correctAnswers
-              });
+            openQuiz(quizName, d); // Open quiz
+
+            quizzes[quizName] = d; // Save quiz
+            localStorage.setItem("quizzes", quizzes);
+          });
+        }
+      });
+
+      function openQuiz(name, quizData) {
+        if (quizData[name]) { // Quiz exists!
+          // Update title text:
+          document.getElementsByClassName("quizplayer-name")[0].innerHTML = quizData[name].name;
+          document.getElementsByClassName("quizplayer-name")[0].classList.remove("no-margin");
+          let questionLength = (quizData[name].options.questionsToShow ? quizData[name].options.questionsToShow : quizData[name].questions.length);
+          document.getElementsByClassName("quizplayer-questions")[0].innerHTML = questionLength + " Question" + (questionLength !== 1 ? "s" : "");
+
+          // Get/randomize questions:
+          let questions = [];
+          let tempQuestions = [];
+          for (let i = 0; i < quizData[name].questions.length; i++) {
+            tempQuestions.push({
+              question: quizData[name].questions[i].question,
+              imageURI: quizData[name].questions[i].imageURI,
+              answers: quizData[name].questions[i].answers,
+              selected: -1,
+              correctAnswers: quizData[name].questions[i].correctAnswers
+            });
+          }
+          if (quizData[name].options.randomizeQuestionOrder) {
+            for (let i = 0; i < questionLength; i++) {
+              questions.push(tempQuestions.splice(Math.floor(Math.random() * tempQuestions.length), 1)[0]);
             }
-            if (d[quizName].options.randomizeQuestionOrder) {
-              for (let i = 0; i < questionLength; i++) {
-                questions.push(tempQuestions.splice(Math.floor(Math.random() * tempQuestions.length), 1)[0]);
-              }
-            } else {
-              for (let i = 0; i < questionLength; i++) {
-                questions.push(tempQuestions.splice(0, 1)[0]);
-              }
+          } else {
+            for (let i = 0; i < questionLength; i++) {
+              questions.push(tempQuestions.splice(0, 1)[0]);
             }
+          }
 
-            // Update quiz object:
-            quiz = {
-              name: quizName,
-              options: d[quizName].options,
-              questions: questions
-            };
+          // Update quiz object:
+          quiz = {
+            name: name,
+            options: quizData[name].options,
+            questions: questions
+          };
 
-            let letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+          let letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
-            // Display questions:
-            for (let i = 0; i < questions.length; i++) {
-              let answersText = "";
-              for (let j = 0; j < questions[i].answers.length; j++) {
-                answersText += `
-                  <div class="option" onclick="selectOption(${i}, ${j}, this)">
-                    <div class="option-number">${letters[j % 26]}</div>
-                    <div class="option-text-container">
-                      <div class="option-text">${questions[i].answers[j]}</div>
-                    </div>
-                  </div>
-                `;
-              }
-
-              let el = document.createElement("div");
-              el.innerHTML = `
-                <div class="question">
-                  <h1>Question ${i + 1}: ${questions[i].question.split("<").join("&lt").split(">").join("&gt").split("\n").join("<br>").split("<br> ").join("<br>&nbsp")}</h1>
-                  ${(questions[i].imageURI !== undefined && questions[i].imageURI !== "") ? `<img class="question-image" src="${questions[i].imageURI}">` : ""}
-                  <div class="options">
-                    ${answersText}
+          // Display questions:
+          for (let i = 0; i < questions.length; i++) {
+            let answersText = "";
+            for (let j = 0; j < questions[i].answers.length; j++) {
+              answersText += `
+                <div class="option" onclick="selectOption(${i}, ${j}, this)">
+                  <div class="option-number">${letters[j % 26]}</div>
+                  <div class="option-text-container">
+                    <div class="option-text">${questions[i].answers[j]}</div>
                   </div>
                 </div>
               `;
-
-              document.getElementsByClassName("questions")[0].appendChild(el);
             }
 
-          } else { // Quiz does not exist
-            error("This quiz does not exist!", function() {
-              window.open("https://quiz.simplexshotz.tk/index.html", "_self");
-            });
+            let el = document.createElement("div");
+            el.innerHTML = `
+              <div class="question">
+                <h1>Question ${i + 1}: ${questions[i].question.split("<").join("&lt").split(">").join("&gt").split("\n").join("<br>").split("<br> ").join("<br>&nbsp")}</h1>
+                ${(questions[i].imageURI !== undefined && questions[i].imageURI !== "") ? `<img class="question-image" src="${questions[i].imageURI}">` : ""}
+                <div class="options">
+                  ${answersText}
+                </div>
+              </div>
+            `;
+
+            document.getElementsByClassName("questions")[0].appendChild(el);
           }
-        })
-      });
+
+        } else { // Quiz does not exist
+          error("This quiz does not exist!", function() {
+            window.open("https://quiz.simplexshotz.tk/index.html", "_self");
+          });
+        }
+      }
 
       function selectOption(Qi, Ai, el) {
         // Deselect all other options (aside from the one being clicked on):
