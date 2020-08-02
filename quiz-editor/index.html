@@ -404,105 +404,94 @@
         document.getElementsByClassName("questions")[0].appendChild(newEl);
       });
 
-      function createQuiz() {
-        ref.quizzes.once("value", function(data) {
-          let d = data.val();
+      async function createQuiz() {
 
-          // Quiz verification:
-          let verified = true;
-          if (quiz.name !== "") { // Verify that it has a name
-            let nameExists = false;
-            for (let i in d) {
-              if (d[i].name === quiz.name) {
-                nameExists = true;
-                break;
-              }
-            }
-
-            if (!nameExists || getQueries().quiz) { // Verify that the name does not already exist
-              if (quiz.questions.length !== 0) { // Verify that the quiz has at least 1 question
-                for (let i = 0; i < quiz.questions.length; i++) {
-                  if (quiz.questions[i].question === "") { // Verify that all questions have a question
-                    error("Question " + (i + 1) + "'s question field is blank.");
-                    verified = false;
-                  } else {
-                    let allBlankAnswers = true;
-                    for (let j = 0; j < quiz.questions[i].answers.length; j++) {
-                      if (quiz.questions[i].answers[j] !== "") {
-                        allBlankAnswers = false;
-                        break;
-                      }
-                    }
-                    if (!allBlankAnswers) { // Verify that there is at least one actual answer
-                      if (quiz.questions[i].correctAnswers.length === 0) { // There are no correct answers
-                        error("You must select at least 1 correct answer for Question " + (i + 1) + "!");
-                        verified = false;
-                      } else {
-                        let allCorrectAnswersBlank = true;
-                        for (let k = 0; k < quiz.questions[i].correctAnswers.length; k++) {
-                          if (quiz.questions[i].answers[quiz.questions[i].correctAnswers[k]] !== "") {
-                            allCorrectAnswersBlank = false;
-                          }
-                        }
-                        if (allCorrectAnswersBlank) { // All correct answers are blank
-                          error("You must select at least 1 correct answer for Question " + (i + 1) + " that isn't blank!");
-                          verified = false;
-                        }
-                      }
-                    } else { // All answers are blank
-                      error("All of Question " + (i + 1) + "'s answer fields are blank.");
-                      verified = false;
+        // Quiz verification:
+        let verified = true;
+        if (quiz.name !== "") { // Verify that it has a name
+          if (quizzesKeys.indexOf(quiz.name) === -1 || getQueries().quiz) { // Verify that the name does not already exist
+            if (quiz.questions.length !== 0) { // Verify that the quiz has at least 1 question
+              for (let i = 0; i < quiz.questions.length; i++) {
+                if (quiz.questions[i].question === "") { // Verify that all questions have a question
+                  error("Question " + (i + 1) + "'s question field is blank.");
+                  verified = false;
+                } else {
+                  let allBlankAnswers = true;
+                  for (let j = 0; j < quiz.questions[i].answers.length; j++) {
+                    if (quiz.questions[i].answers[j] !== "") {
+                      allBlankAnswers = false;
+                      break;
                     }
                   }
+                  if (!allBlankAnswers) { // Verify that there is at least one actual answer
+                    if (quiz.questions[i].correctAnswers.length === 0) { // There are no correct answers
+                      error("You must select at least 1 correct answer for Question " + (i + 1) + "!");
+                      verified = false;
+                    } else {
+                      let allCorrectAnswersBlank = true;
+                      for (let k = 0; k < quiz.questions[i].correctAnswers.length; k++) {
+                        if (quiz.questions[i].answers[quiz.questions[i].correctAnswers[k]] !== "") {
+                          allCorrectAnswersBlank = false;
+                        }
+                      }
+                      if (allCorrectAnswersBlank) { // All correct answers are blank
+                        error("You must select at least 1 correct answer for Question " + (i + 1) + " that isn't blank!");
+                        verified = false;
+                      }
+                    }
+                  } else { // All answers are blank
+                    error("All of Question " + (i + 1) + "'s answer fields are blank.");
+                    verified = false;
+                  }
                 }
-              } else { // Quiz has no questions
-                error("You can't create a quiz with no questions! Add some questions and try again.");
-                verified = false;
               }
-            } else { // Name already exists
-              error("A quiz with that name already exists! Use a more unique name and try again.");
+            } else { // Quiz has no questions
+              error("You can't create a quiz with no questions! Add some questions and try again.");
               verified = false;
             }
-          } else { // Does not have a name
-            error("Enter a name for the quiz!");
+          } else { // Name already exists
+            error("A quiz with that name already exists! Use a more unique name and try again.");
             verified = false;
           }
-          if (verified) {
-            // Remove all empty answers:
-            for (let i = 0; i < quiz.questions.length; i++) {
-              for (let j = 0; j < quiz.questions[i].answers.length; j++) {
-                if (quiz.questions[i].answers[j] === "") {
-                  quiz.questions[i].answers.splice(j, 1);
-                  if (quiz.questions[i].correctAnswers.indexOf(j) !== -1) {
-                    quiz.questions[i].correctAnswers.splice(quiz.questions[i].correctAnswers.indexOf(j), 1);
-                  }
-                  // Decrement indices higher than "j":
-                  for (let k = 0; k < quiz.questions[i].correctAnswers.length; k++) {
-                    if (quiz.questions[i].correctAnswers[k] > j) {
-                      quiz.questions[i].correctAnswers[k]--;
-                    }
+        } else { // Does not have a name
+          error("Enter a name for the quiz!");
+          verified = false;
+        }
+        if (verified) {
+          // Remove all empty answers:
+          for (let i = 0; i < quiz.questions.length; i++) {
+            for (let j = 0; j < quiz.questions[i].answers.length; j++) {
+              if (quiz.questions[i].answers[j] === "") {
+                quiz.questions[i].answers.splice(j, 1);
+                if (quiz.questions[i].correctAnswers.indexOf(j) !== -1) {
+                  quiz.questions[i].correctAnswers.splice(quiz.questions[i].correctAnswers.indexOf(j), 1);
+                }
+                // Decrement indices higher than "j":
+                for (let k = 0; k < quiz.questions[i].correctAnswers.length; k++) {
+                  if (quiz.questions[i].correctAnswers[k] > j) {
+                    quiz.questions[i].correctAnswers[k]--;
                   }
                 }
               }
             }
-
-            if (quiz.options.questionsToShow > quiz.questions.length) {
-              quiz.options.questionsToShow = quiz.questions.length;
-            }
-
-            quiz.created = new Date().getTime();
-
-            let queries = getQueries();
-            if (queries.quiz) {
-              quiz.edited = true;
-            }
-
-            uploadQuiz(queries.quiz ? queries.quiz : quiz.name, quiz);
-          } else {
-            let queries = getQueries();
-            document.getElementsByClassName("create-quiz-text")[0].innerText = queries.quiz ? "✓ Update Quiz" : "✓ Create Quiz";
           }
-        });
+
+          if (quiz.options.questionsToShow > quiz.questions.length) {
+            quiz.options.questionsToShow = quiz.questions.length;
+          }
+
+          quiz.created = new Date().getTime();
+
+          let queries = getQueries();
+          if (queries.quiz) {
+            quiz.edited = true;
+          }
+
+          uploadQuiz(queries.quiz ? queries.quiz : quiz.name, quiz);
+        } else {
+          let queries = getQueries();
+          document.getElementsByClassName("create-quiz-text")[0].innerText = queries.quiz ? "✓ Update Quiz" : "✓ Create Quiz";
+        }
         let queries = getQueries();
         document.getElementsByClassName("create-quiz-text")[0].innerText = queries.quiz ? "Updating Quiz..." : "Creating Quiz...";
       }
