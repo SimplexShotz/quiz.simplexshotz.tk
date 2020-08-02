@@ -526,7 +526,7 @@
                 <p class="small" onclick="deleteQuestion(${i})">Delete</p>
               </div>
               <h2>Question:</h2>
-              <textarea rows="1" class="question-question" placeholder="Question" value="${quiz.questions[i].question}" onkeyup="updateQuestion(${i}, this);"></textarea>
+              <textarea rows="1" class="question-question" placeholder="Question" onkeyup="updateQuestion(${i}, this);">${quiz.questions[i].question}</textarea>
               <h2>Image (Optional):</h2>
               <div class="question-image-container">
                 <input class="question-image" type="file" onchange="updateImage(${i}, this)">
