@@ -128,7 +128,7 @@
                   <h1 class="quizfinder-name">${quizzes[i].name}</h1>
                   ${quizzes[i].options.editable ? `<a class="small" href="https://quiz.simplexshotz.tk/quiz-creator/index.html?quiz=${quizzes[i].i}">Edit</a>` : ``}
                 </div>
-                <p class="quizfinder-questions no-margin">${questionLength} Question${questionLength !== 1 ? "s" : ""}</p>
+                <p class="quizfinder-questions no-margin">${quizzes[i].questions.length} Question${quizzes[i].questions.length !== 1 ? "s" : ""}${quizzes[i].questions.length !== questionLength ? ` (${questionLength} Shown)` : ""}</p>
                 <p class="quizfinder-time small">${quizzes[i].edited ? "Edited" : "Created"} ${convertToTimeString(new Date().getTime() - quizzes[i].created)} ago</p>
               </div>
             `;

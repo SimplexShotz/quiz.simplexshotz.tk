@@ -64,6 +64,28 @@
         max-width: 50%;
         max-height: 100px;
       }
+      .question-image-input {
+      	width: 0.1px;
+      	height: 0.1px;
+      	opacity: 0;
+      	overflow: hidden;
+      	position: absolute;
+      	z-index: -1;
+      }
+      .question-image-remove, .question-image {
+        width: fit-content;
+        padding: 10px;
+        margin-top: 5px;
+        border-radius: 10px;
+        transition: box-shadow 0.25s, background-color 0.25s;
+      }
+      .question-image-remove:hover, .question-image:hover {
+        cursor: pointer;
+        box-shadow: 0px 0px 10px 0px rgba(200, 200, 200, 0.5);
+      }
+      .question-image-remove:active, .question-image:active {
+        background-color: rgb(250, 250, 250);
+      }
       .question-answers-container {
         display: flex;
       }
@@ -276,9 +298,11 @@
             <textarea rows="1" class="question-question" placeholder="Question" onkeyup="updateQuestion(${quiz.questions.length - 1}, this);"></textarea>
             <h2>Image (Optional):</h2>
             <div class="question-image-container">
-              <input class="question-image" type="file" onchange="updateImage(${quiz.questions.length - 1}, this)">
+              <input class="question-image-input" type="file" id="file${quiz.questions.length - 1}" onchange="updateImage(${quiz.questions.length - 1}, this)">
+              <label class="question-image" for="file${quiz.questions.length - 1}">Select File</label>
               <div class="question-image-display-container" style="display: none;">
                 <br><img class="question-image-display" src="">
+                <div class="question-image-remove" onclick="removeImage(${quiz.questions.length - 1}, this)">Remove Image</div>
               </div>
             </div>
             <h2>Answers:</h2>
@@ -441,21 +465,26 @@
         var reader = new FileReader();
 
         reader.onloadend = function() {
-          el.parentNode.childNodes[3].style.display = "block";
-          el.parentNode.childNodes[3].childNodes[2].src = reader.result;
+          if (reader.result.split("/")[0].split(":")[1] === "image") {
+            el.parentNode.childNodes[5].style.display = "block";
+            el.parentNode.childNodes[5].childNodes[2].src = reader.result;
 
-          quiz.questions[Qi].imageURI = reader.result;
+            quiz.questions[Qi].imageURI = reader.result;
+          } else {
+            error("That file is not an image!");
+          }
         };
 
         if (el.files[0]) {
           reader.readAsDataURL(el.files[0]);
-        } else {
-          el.parentNode.childNodes[3].style.display = "none";
-          el.parentNode.childNodes[3].childNodes[2].src = "";
-
-          quiz.questions[Qi].imageURI = "";
         }
 
+      }
+      function removeImage(Qi, el) {
+        el.parentNode.style.display = "none";
+        el.parentNode.childNodes[2].src = "";
+
+        quiz.questions[Qi].imageURI = "";
       }
 
       function updateName(el) {
@@ -529,9 +558,11 @@
               <textarea rows="1" class="question-question" placeholder="Question" onkeyup="updateQuestion(${i}, this);">${quiz.questions[i].question}</textarea>
               <h2>Image (Optional):</h2>
               <div class="question-image-container">
-                <input class="question-image" type="file" onchange="updateImage(${i}, this)">
+                <input class="question-image-input" type="file" id="file${i}" onchange="updateImage(${quiz.questions.length - 1}, this)">
+                <label class="question-image" for="file${i}">Select File</label>
                 <div class="question-image-display-container" style="display: ${quiz.questions[i].imageURI ? "block" : "none"};">
                   <br><img class="question-image-display" src="${quiz.questions[i].imageURI ? quiz.questions[i].imageURI : ""}">
+                  <div class="question-image-remove" onclick="removeImage(${i}, this)">Remove Image</div>
                 </div>
               </div>
               <h2>Answers:</h2>
