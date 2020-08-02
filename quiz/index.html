@@ -100,7 +100,7 @@
     <div class="content">
       <div class="quizplayer">
         <div class="quizplayer-title">
-          <h1 class="quizplayer-name">Loading Quiz...</h1>
+          <h1 class="quizplayer-name no-margin">Loading Quiz...</h1>
           <p class="quizplayer-questions no-margin"></p>
         </div>
         <div class="questions">
@@ -154,6 +154,7 @@
           if (d[quizName]) { // Quiz exists!
             // Update title text:
             document.getElementsByClassName("quizplayer-name")[0].innerHTML = d[quizName].name;
+            document.getElementsByClassName("quizplayer-name")[0].classList.remove("no-margin");
             let questionLength = (d[quizName].options.questionsToShow ? d[quizName].options.questionsToShow : d[quizName].questions.length);
             document.getElementsByClassName("quizplayer-questions")[0].innerHTML = questionLength + " Question" + (questionLength !== 1 ? "s" : "");
 
