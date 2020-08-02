@@ -205,7 +205,7 @@
               let el = document.createElement("div");
               el.innerHTML = `
                 <div class="question">
-                  <h1>Question ${i + 1}: ${questions[i].question.split("\n").join("<br>").split("<br> ").join("<br>&nbsp").split("<").join("&lt").split(">").join("&gt")}</h1>
+                  <h1>Question ${i + 1}: ${questions[i].question.split("<").join("&lt").split(">").join("&gt").split("\n").join("<br>").split("<br> ").join("<br>&nbsp")}</h1>
                   ${(questions[i].imageURI !== undefined && questions[i].imageURI !== "") ? `<img class="question-image" src="${questions[i].imageURI}">` : ""}
                   <div class="options">
                     ${answersText}
