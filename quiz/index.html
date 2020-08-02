@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <!-- TODO: store quizzes locally to reduce data usage (check against last update; if there's been an update, update the quiz) -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ReQuiz</title>
     <link rel="icon" href="../resources/requiz-icon.png">
@@ -10,6 +9,18 @@
 
     <script src="https://www.gstatic.com/firebasejs/7.17.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/7.17.1/firebase-database.js"></script>
+
+    <script>
+
+      let quizzesKeys = [];
+      function updateKeys(data) {
+        for (let i in data) {
+          quizzesKeys.push(i);
+        }
+      }
+
+    </script>
+    <script src="https://ss-requiz.firebaseio.com/quizzes.json?shallow=true&callback=updateKeys"></script>
 
     <style>
 
@@ -135,131 +146,150 @@
         quizzes: database.ref("quizzes")
       };
 
-      let quizzes = null;
-      if (localStorage.getItem("quizzes")) {
-        quizzes = localStorage.getItem("quizzes");
+      let quizzes = {};
 
-        // Update quizzes:
-        for (let i in quizzes) {
-          ref.quizzes.child(i).child("created").once("value", function(data) {
+      async function updateQuizzes() {
+
+        if (JSON.parse(localStorage.getItem("quizzes"))) {
+          quizzes = JSON.parse(localStorage.getItem("quizzes"));
+
+          // Update quizzes:
+          for (let i in quizzes) {
+            // Get the created metadeta:
+            let data = await ref.quizzes.child(i).child("created").once("value");
             let lastUpdated = data.val();
 
             if (lastUpdated > quizzes[i].created) { // Quiz has been updated since last loaded
-              ref.quizzes.child(i).once("value", function(data) { // Update quiz
-                let d = data.val();
+              let data = await ref.quizzes.child(i).once("value");
+              let d = data.val();
 
-                quizzes[i] = d;
-                localStorage.setItem("quizzes", quizzes);
-              });
+              quizzes[i] = d;
+              localStorage.setItem("quizzes", JSON.stringify(quizzes));
+
             }
+          }
+        }
 
-          });
+        // Ensure that all quizzes have been downloaded:
+        for (let i = 0; i < quizzesKeys.length; i++) {
+          if (!quizzes[quizzesKeys[i]]) { // If not, download the quiz(zes)
+            let data = await ref.quizzes.child(quizzesKeys[i]).once("value");
+            let d = data.val();
+
+            quizzes[quizzesKeys[i]] = d;
+            localStorage.setItem("quizzes", JSON.stringify(quizzes));
+          }
         }
 
       }
 
+      function loadDropdown(quizzesData) {
+        let quizzesArr = []; // Convert from object to array
+        for (let i in quizzesData) {
+          quizzesData[i].i = i;
+          quizzesArr.push(quizzesData[i]);
+        }
+
+        quicksort(quizzesArr, 0, quizzesArr.length - 1, "created"); // Sort by date/time created
+
+        for (let i = 0; i < quizzesArr.length; i++) {
+          // DROPDOWN:
+          let dropdownEl = document.createElement("div");
+          dropdownEl.innerHTML = `
+            <div class="dropdown-item" class="dropdown-item" onclick="openQuiz('${quizzesArr[i].i}')">${quizzesArr[i].name}</div>
+          `;
+          document.getElementsByClassName("dropdown-list")[0].appendChild(dropdownEl);
+        }
+      }
+
       let quiz = {};
 
-      window.addEventListener("load", function() {
-        ref.quizzes.once("value", function(data) {
-          let d = data.val();
+      window.addEventListener("load", async function() {
 
-          for (let i in d) {
-            let el = document.createElement("div");
-            el.innerHTML = `<div class="dropdown-item" class="dropdown-item" onclick="openQuiz('${i}')">${d[i].name}</div>`;
-            document.getElementsByClassName("dropdown-list")[0].appendChild(el);
-          }
-        });
+        await updateQuizzes();
+
+        loadDropdown(quizzes);
 
         let quizName = getQueries().quiz;
 
         // Open quiz:
-        if (quizzes !== null && quizzes[quizName]) { // Quiz has been locally saved
-          openQuiz(quizName, quizzes[quizName]); // Open quiz
-        } else { // Quiz has not been locally saved
-          ref.quizzes.once("value", function(data) {
-            let d = data.val();
-
-            openQuiz(quizName, d); // Open quiz
-
-            quizzes[quizName] = d; // Save quiz
-            localStorage.setItem("quizzes", quizzes);
-          });
-        }
-      });
-
-      function openQuiz(name, quizData) {
-        if (quizData[name]) { // Quiz exists!
-          // Update title text:
-          document.getElementsByClassName("quizplayer-name")[0].innerHTML = quizData[name].name;
-          document.getElementsByClassName("quizplayer-name")[0].classList.remove("no-margin");
-          let questionLength = (quizData[name].options.questionsToShow ? quizData[name].options.questionsToShow : quizData[name].questions.length);
-          document.getElementsByClassName("quizplayer-questions")[0].innerHTML = questionLength + " Question" + (questionLength !== 1 ? "s" : "");
-
-          // Get/randomize questions:
-          let questions = [];
-          let tempQuestions = [];
-          for (let i = 0; i < quizData[name].questions.length; i++) {
-            tempQuestions.push({
-              question: quizData[name].questions[i].question,
-              imageURI: quizData[name].questions[i].imageURI,
-              answers: quizData[name].questions[i].answers,
-              selected: -1,
-              correctAnswers: quizData[name].questions[i].correctAnswers
-            });
-          }
-          if (quizData[name].options.randomizeQuestionOrder) {
-            for (let i = 0; i < questionLength; i++) {
-              questions.push(tempQuestions.splice(Math.floor(Math.random() * tempQuestions.length), 1)[0]);
-            }
-          } else {
-            for (let i = 0; i < questionLength; i++) {
-              questions.push(tempQuestions.splice(0, 1)[0]);
-            }
-          }
-
-          // Update quiz object:
-          quiz = {
-            name: name,
-            options: quizData[name].options,
-            questions: questions
-          };
-
-          let letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-
-          // Display questions:
-          for (let i = 0; i < questions.length; i++) {
-            let answersText = "";
-            for (let j = 0; j < questions[i].answers.length; j++) {
-              answersText += `
-                <div class="option" onclick="selectOption(${i}, ${j}, this)">
-                  <div class="option-number">${letters[j % 26]}</div>
-                  <div class="option-text-container">
-                    <div class="option-text">${questions[i].answers[j]}</div>
-                  </div>
-                </div>
-              `;
-            }
-
-            let el = document.createElement("div");
-            el.innerHTML = `
-              <div class="question">
-                <h1>Question ${i + 1}: ${questions[i].question.split("<").join("&lt").split(">").join("&gt").split("\n").join("<br>").split("<br> ").join("<br>&nbsp")}</h1>
-                ${(questions[i].imageURI !== undefined && questions[i].imageURI !== "") ? `<img class="question-image" src="${questions[i].imageURI}">` : ""}
-                <div class="options">
-                  ${answersText}
-                </div>
-              </div>
-            `;
-
-            document.getElementsByClassName("questions")[0].appendChild(el);
-          }
-
+        if (quizzes[quizName]) {
+          loadQuiz(quizzes[quizName]); // Open quiz
         } else { // Quiz does not exist
           error("This quiz does not exist!", function() {
             window.open("https://quiz.simplexshotz.tk/index.html", "_self");
           });
         }
+
+      });
+
+      function loadQuiz(quizData) {
+
+        // Update title text:
+        document.getElementsByClassName("quizplayer-name")[0].innerHTML = quizData.name;
+        document.getElementsByClassName("quizplayer-name")[0].classList.remove("no-margin");
+        let questionLength = (quizData.options.questionsToShow ? quizData.options.questionsToShow : quizData.questions.length);
+        document.getElementsByClassName("quizplayer-questions")[0].innerHTML = questionLength + " Question" + (questionLength !== 1 ? "s" : "");
+
+        // Get/randomize questions:
+        let questions = [];
+        let tempQuestions = [];
+        for (let i = 0; i < quizData.questions.length; i++) {
+          tempQuestions.push({
+            question: quizData.questions[i].question,
+            imageURI: quizData.questions[i].imageURI,
+            answers: quizData.questions[i].answers,//
+            selected: -1,
+            correctAnswers: quizData.questions[i].correctAnswers
+          });
+        }
+        if (quizData.options.randomizeQuestionOrder) {
+          for (let i = 0; i < questionLength; i++) {
+            questions.push(tempQuestions.splice(Math.floor(Math.random() * tempQuestions.length), 1)[0]);
+          }
+        } else {
+          for (let i = 0; i < questionLength; i++) {
+            questions.push(tempQuestions.splice(0, 1)[0]);
+          }
+        }
+
+        // Update quiz object:
+        quiz = {
+          name: quizData.name,
+          options: quizData.options,
+          questions: questions
+        };
+
+        let letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+        // Display questions:
+        for (let i = 0; i < questions.length; i++) {
+          let answersText = "";
+          for (let j = 0; j < questions[i].answers.length; j++) {
+            answersText += `
+              <div class="option" onclick="selectOption(${i}, ${j}, this)">
+                <div class="option-number">${letters[j % 26]}</div>
+                <div class="option-text-container">
+                  <div class="option-text">${questions[i].answers[j]}</div>
+                </div>
+              </div>
+            `;
+          }
+
+          let el = document.createElement("div");
+          el.innerHTML = `
+            <div class="question">
+              <h1>Question ${i + 1}: ${questions[i].question.split("<").join("&lt").split(">").join("&gt").split("\n").join("<br>").split("<br> ").join("<br>&nbsp")}</h1>
+              ${(questions[i].imageURI !== undefined && questions[i].imageURI !== "") ? `<img class="question-image" src="${questions[i].imageURI}">` : ""}
+              <div class="options">
+                ${answersText}
+              </div>
+            </div>
+          `;
+
+          document.getElementsByClassName("questions")[0].appendChild(el);
+        }
+
       }
 
       function selectOption(Qi, Ai, el) {
@@ -340,7 +370,7 @@
       });
 
       document.getElementById("dropdown-item-new-quiz").addEventListener("click", function() {
-        window.open("https://quiz.simplexshotz.tk/quiz-creator/index.html", "_self");
+        window.open("https://quiz.simplexshotz.tk/quiz-editor/index.html", "_self");
       });
 
       function toggle(cl, oel) {
@@ -370,6 +400,32 @@
             }
           }, 500);
         }, 3000);
+      }
+
+      function partition(arr, lo, hi, by) {
+        var pivot = (by ? arr[hi][by] : arr[hi]);
+        var i = lo;
+        for (var j = lo; j < hi; j++) {
+          if ((by ? arr[j][by] : arr[j]) > pivot) {
+            if (i !== j) {
+              var t = arr[j];
+              arr[j] = arr[i];
+              arr[i] = t;
+            }
+            i++;
+          }
+        }
+        var t = arr[hi];
+        arr[hi] = arr[i];
+        arr[i] = t;
+        return i;
+      }
+      function quicksort(arr, lo, hi, by) {
+        if (lo < hi) {
+          var p = partition(arr, lo, hi, by);
+          quicksort(arr, lo, p - 1, by);
+          quicksort(arr, p + 1, hi, by);
+        }
       }
 
     </script>

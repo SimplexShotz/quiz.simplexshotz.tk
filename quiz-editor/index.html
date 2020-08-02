@@ -10,6 +10,18 @@
     <script src="https://www.gstatic.com/firebasejs/7.17.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/7.17.1/firebase-database.js"></script>
 
+    <script>
+
+      let quizzesKeys = [];
+      function updateKeys(data) {
+        for (let i in data) {
+          quizzesKeys.push(i);
+        }
+      }
+
+    </script>
+    <script src="https://ss-requiz.firebaseio.com/quizzes.json?shallow=true&callback=updateKeys"></script>
+
     <style>
 
       .quizcreator-option {
@@ -223,6 +235,62 @@
         quizzes: database.ref("quizzes")
       };
 
+      let quizzes = {};
+
+      async function updateQuizzes() {
+
+        if (JSON.parse(localStorage.getItem("quizzes"))) {
+          quizzes = JSON.parse(localStorage.getItem("quizzes"));
+
+          // Update quizzes:
+          for (let i in quizzes) {
+            // Get the created metadeta:
+            let data = await ref.quizzes.child(i).child("created").once("value");
+            let lastUpdated = data.val();
+
+            if (lastUpdated > quizzes[i].created) { // Quiz has been updated since last loaded
+              let data = await ref.quizzes.child(i).once("value");
+              let d = data.val();
+
+              quizzes[i] = d;
+              localStorage.setItem("quizzes", JSON.stringify(quizzes));
+
+            }
+          }
+        }
+
+        // Ensure that all quizzes have been downloaded:
+        for (let i = 0; i < quizzesKeys.length; i++) {
+          if (!quizzes[quizzesKeys[i]]) { // If not, download the quiz(zes)
+            let data = await ref.quizzes.child(quizzesKeys[i]).once("value");
+            let d = data.val();
+
+            quizzes[quizzesKeys[i]] = d;
+            localStorage.setItem("quizzes", JSON.stringify(quizzes));
+          }
+        }
+
+      }
+
+      function loadDropdown(quizzesData) {
+        let quizzesArr = []; // Convert from object to array
+        for (let i in quizzesData) {
+          quizzesData[i].i = i;
+          quizzesArr.push(quizzesData[i]);
+        }
+
+        quicksort(quizzesArr, 0, quizzesArr.length - 1, "created"); // Sort by date/time created
+
+        for (let i = 0; i < quizzesArr.length; i++) {
+          // DROPDOWN:
+          let dropdownEl = document.createElement("div");
+          dropdownEl.innerHTML = `
+            <div class="dropdown-item" class="dropdown-item" onclick="openQuiz('${quizzesArr[i].i}')">${quizzesArr[i].name}</div>
+          `;
+          document.getElementsByClassName("dropdown-list")[0].appendChild(dropdownEl);
+        }
+      }
+
       var quiz = {
         name: "",
         options: {
@@ -235,37 +303,37 @@
         edited: false
       };
 
-      window.addEventListener("load", function() {
-        ref.quizzes.once("value", function(data) {
-          let d = data.val();
+      window.addEventListener("load", async function() {
 
-          for (let i in d) {
-            let el = document.createElement("div");
-            el.innerHTML = `<div class="dropdown-item" class="dropdown-item" onclick="openQuiz('${i}')">${d[i].name}</div>`;
-            document.getElementsByClassName("dropdown-list")[0].appendChild(el);
-          }
+        await updateQuizzes(); // Update quizzes
 
-          // If editing a quiz:
-          let queries = getQueries();
-          if (queries.quiz) {
-            if (d[queries.quiz].options.editable) {
-              document.getElementsByClassName("quizcreator-name")[0].value = d[queries.quiz].name;
-              document.getElementsByClassName("quizcreator-option-checkbox")[0].checked = d[queries.quiz].options.editable;
-              document.getElementsByClassName("quizcreator-option-checkbox")[1].checked = d[queries.quiz].options.randomizeQuestionOrder;
-              document.getElementsByClassName("quizcreator-option-input")[0].value = d[queries.quiz].options.questionsToShow;
+        loadDropdown(quizzes);
 
-              quiz = d[queries.quiz];
-              updateQuiz();
+        loadQuiz(quizzes);
 
-              document.getElementsByClassName("create-quiz-text")[0].innerText = "✓ Update Quiz";
-            } else {
-              error("This quiz is not allowed to be edited.", function() {
-                window.open("https://quiz.simplexshotz.tk/index.html", "_self");
-              });
-            }
-          }
-        });
       });
+
+      function loadQuiz(quizData) {
+        // If editing a quiz:
+        let queries = getQueries();
+        if (queries.quiz) {
+          if (quizData[queries.quiz].options.editable) {
+            document.getElementsByClassName("quizcreator-name")[0].value = quizData[queries.quiz].name;
+            document.getElementsByClassName("quizcreator-option-checkbox")[0].checked = quizData[queries.quiz].options.editable;
+            document.getElementsByClassName("quizcreator-option-checkbox")[1].checked = quizData[queries.quiz].options.randomizeQuestionOrder;
+            document.getElementsByClassName("quizcreator-option-input")[0].value = quizData[queries.quiz].options.questionsToShow;
+
+            quiz = quizData[queries.quiz];
+            updateQuiz();
+
+            document.getElementsByClassName("create-quiz-text")[0].innerText = "✓ Update Quiz";
+          } else {
+            error("This quiz is not allowed to be edited.", function() {
+              window.open("https://quiz.simplexshotz.tk/index.html", "_self");
+            });
+          }
+        }
+      }
 
       function getQueries() {
 
@@ -464,22 +532,10 @@
           }
         }
 
-        // ref.quizzes.child(queries.quiz ? queries.quiz : quiz.name).set(quiz);
-        //
-        // // Load the quiz when it has been created:
-        // ref.quizzes.on("value", function(data) {
-        //   let d = data.val();
-        //
-        //   let queries = getQueries();
-        //   if (queries.quiz && d[queries.quiz] || d[quiz.name]) {
-        //     window.open("https://quiz.simplexshotz.tk/quiz/index.html?quiz=" + (queries.quiz ? queries.quiz : quiz.name), "_self");
-        //   }
-        // });
-
       }
 
       document.getElementById("dropdown-item-new-quiz").addEventListener("click", function() {
-        window.open("https://quiz.simplexshotz.tk/quiz-creator/index.html", "_self");
+        window.open("https://quiz.simplexshotz.tk/quiz-editor/index.html", "_self");
       });
 
       function toggle(cl, oel) {
@@ -638,6 +694,32 @@
             }
           }, 500);
         }, 3000);
+      }
+
+      function partition(arr, lo, hi, by) {
+        var pivot = (by ? arr[hi][by] : arr[hi]);
+        var i = lo;
+        for (var j = lo; j < hi; j++) {
+          if ((by ? arr[j][by] : arr[j]) > pivot) {
+            if (i !== j) {
+              var t = arr[j];
+              arr[j] = arr[i];
+              arr[i] = t;
+            }
+            i++;
+          }
+        }
+        var t = arr[hi];
+        arr[hi] = arr[i];
+        arr[i] = t;
+        return i;
+      }
+      function quicksort(arr, lo, hi, by) {
+        if (lo < hi) {
+          var p = partition(arr, lo, hi, by);
+          quicksort(arr, lo, p - 1, by);
+          quicksort(arr, p + 1, hi, by);
+        }
       }
 
     </script>
