@@ -19,6 +19,7 @@ a {
 }
 textarea {
   resize: vertical;
+  font-family: "Roboto";
 }
 
 .header {
