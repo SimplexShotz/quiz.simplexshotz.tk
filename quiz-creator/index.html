@@ -273,7 +273,7 @@
               <p class="small" onclick="deleteQuestion(${quiz.questions.length - 1})">Delete</p>
             </div>
             <h2>Question:</h2>
-            <textarea class="question-question" placeholder="Question" onkeyup="updateQuestion(${quiz.questions.length - 1}, this);"></textarea>
+            <textarea rows="1" class="question-question" placeholder="Question" onkeyup="updateQuestion(${quiz.questions.length - 1}, this);"></textarea>
             <h2>Image (Optional):</h2>
             <div class="question-image-container">
               <input class="question-image" type="file" onchange="updateImage(${quiz.questions.length - 1}, this)">
@@ -526,7 +526,7 @@
                 <p class="small" onclick="deleteQuestion(${i})">Delete</p>
               </div>
               <h2>Question:</h2>
-              <input class="question-question" type="text" placeholder="Question" value="${quiz.questions[i].question}" onkeyup="updateQuestion(${i}, this);">
+              <textarea rows="1" class="question-question" placeholder="${quiz.questions[i].question}" onkeyup="updateQuestion(${i}, this);"></textarea>
               <h2>Image (Optional):</h2>
               <div class="question-image-container">
                 <input class="question-image" type="file" onchange="updateImage(${i}, this)">
