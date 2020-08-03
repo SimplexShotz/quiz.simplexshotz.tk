@@ -556,10 +556,21 @@
 
         reader.onloadend = function() {
           if (reader.result.split("/")[0].split(":")[1] === "image") {
-            el.parentNode.childNodes[5].style.display = "block";
-            el.parentNode.childNodes[5].childNodes[2].src = reader.result;
 
-            quiz.questions[Qi].imageURI = reader.result;
+            var image = new Image();
+            image.src = reader.result;
+
+            image.onload = function() { // Wait until the image is loaded
+              var resized = resizeImage(image); // Send it to canvas
+
+              console.log(reader.result);
+              console.log(resized);
+
+              el.parentNode.childNodes[5].style.display = "block";
+              el.parentNode.childNodes[5].childNodes[2].src = resized;
+
+              quiz.questions[Qi].imageURI = resized;
+            };
           } else {
             error("That file is not an image!");
           }
@@ -575,6 +586,40 @@
         el.parentNode.childNodes[2].src = "";
 
         quiz.questions[Qi].imageURI = "";
+      }
+      function resizeImage(img) {
+
+        let max_width = 1000;
+        let max_height = 300;
+
+        let canvas = document.createElement('canvas');
+
+        let width = img.width;
+        let height = img.height;
+
+        // Calculate the width and height, constraining the proportions
+        if (width > height) {
+          if (width > max_width) {
+            // height *= max_width / width;
+            height = Math.round(height *= max_width / width);
+            width = max_width;
+          }
+        } else {
+          if (height > max_height) {
+            // width *= max_height / height;
+            width = Math.round(width *= max_height / height);
+            height = max_height;
+          }
+        }
+
+        // Resize the canvas and draw the image data into it:
+        canvas.width = width;
+        canvas.height = height;
+        let ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, width, height);
+
+        return canvas.toDataURL("image/jpeg", 0.7); // Get the data from canvas as 70% JPG
+
       }
 
       function updateName(el) {
