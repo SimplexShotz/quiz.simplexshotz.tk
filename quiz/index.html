@@ -15,14 +15,18 @@
     <script>
 
       let quizzesKeys = [];
-      function updateKeys(data) {
-        for (let i in data) {
-          quizzesKeys.push(i);
-        }
-      }
+
+      fetch("https://ss-requiz.firebaseio.com/quizzes.json?shallow=true")
+        .then((res) => {
+          return res.json();
+        })
+        .then((data) => {
+          for (let i in data) {
+            quizzesKeys.push(i);
+          }
+        });
 
     </script>
-    <script src="https://ss-requiz.firebaseio.com/quizzes.json?shallow=true&callback=updateKeys"></script>
 
     <style>
 
@@ -167,7 +171,6 @@
               let d = data.val();
 
               quizzes[i] = d;
-              idbKeyval.set("quizzes", JSON.stringify(quizzes));
 
             }
           }
@@ -176,13 +179,23 @@
         // Ensure that all quizzes have been downloaded:
         for (let i = 0; i < quizzesKeys.length; i++) {
           if (!quizzes[quizzesKeys[i]]) { // If not, download the quiz(zes)
+
+            console.log("OOF");
             let data = await ref.quizzes.child(quizzesKeys[i]).once("value");
             let d = data.val();
 
             quizzes[quizzesKeys[i]] = d;
-            idbKeyval.set("quizzes", JSON.stringify(quizzes));
           }
         }
+
+        // Remove deleted quizzes:
+        for (let i in quizzes) {
+          if (quizzesKeys.indexOf(i) === -1) {
+            delete quizzes[i];
+          }
+        }
+
+        idbKeyval.set("quizzes", JSON.stringify(quizzes));
 
       }
 
