@@ -383,7 +383,7 @@
             <textarea rows="1" class="question-question" placeholder="Question" onkeyup="updateQuestion(${quiz.questions.length - 1}, this);"></textarea>
             <h2>Image (Optional):</h2>
             <div class="question-image-container">
-              <input class="question-image-input" type="file" id="file${quiz.questions.length - 1}" onchange="updateImage(${quiz.questions.length - 1}, this)">
+              <input class="question-image-input" type="file" accept="image/*" id="file${quiz.questions.length - 1}" onchange="updateImage(${quiz.questions.length - 1}, this)">
               <label class="question-image" for="file${quiz.questions.length - 1}">Select File</label>
               <div class="question-image-display-container" style="display: none;">
                 <br><img class="question-image-display" src="">
@@ -693,7 +693,7 @@
               <textarea rows="1" class="question-question" placeholder="Question" onkeyup="updateQuestion(${i}, this);">${quiz.questions[i].question}</textarea>
               <h2>Image (Optional):</h2>
               <div class="question-image-container">
-                <input class="question-image-input" type="file" id="file${i}" onchange="updateImage(${quiz.questions.length - 1}, this)">
+                <input class="question-image-input" type="file" accept="image/*" id="file${i}" onchange="updateImage(${quiz.questions.length - 1}, this)">
                 <label class="question-image" for="file${i}">Select File</label>
                 <div class="question-image-display-container" style="display: ${quiz.questions[i].imageURI ? "block" : "none"};">
                   <br><img class="question-image-display" src="${quiz.questions[i].imageURI ? quiz.questions[i].imageURI : ""}">
