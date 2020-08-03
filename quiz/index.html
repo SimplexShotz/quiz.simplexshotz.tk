@@ -5,10 +5,12 @@
     <title>ReQuiz</title>
     <link rel="icon" href="../resources/requiz-icon.png">
     <link rel="stylesheet" href="../resources/base-styles.css">
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;500;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;500;900&display=swap">
 
     <script src="https://www.gstatic.com/firebasejs/7.17.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/7.17.1/firebase-database.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/idb-keyval@3/dist/idb-keyval-iife.min.js"></script>
 
     <script>
 
@@ -150,8 +152,9 @@
 
       async function updateQuizzes() {
 
-        if (JSON.parse(localStorage.getItem("quizzes"))) {
-          quizzes = JSON.parse(localStorage.getItem("quizzes"));
+        let data = await idbKeyval.get("quizzes");
+        if (data && JSON.parse(data)) {
+          quizzes = JSON.parse(data);
 
           // Update quizzes:
           for (let i in quizzes) {
@@ -164,7 +167,7 @@
               let d = data.val();
 
               quizzes[i] = d;
-              localStorage.setItem("quizzes", JSON.stringify(quizzes));
+              idbKeyval.set("quizzes", JSON.stringify(quizzes));
 
             }
           }
@@ -177,7 +180,7 @@
             let d = data.val();
 
             quizzes[quizzesKeys[i]] = d;
-            localStorage.setItem("quizzes", JSON.stringify(quizzes));
+            idbKeyval.set("quizzes", JSON.stringify(quizzes));
           }
         }
 
