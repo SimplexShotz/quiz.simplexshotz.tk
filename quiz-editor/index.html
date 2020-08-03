@@ -516,13 +516,12 @@
 
           // Update progress bar:
           document.getElementsByClassName("create-quiz-progress")[0].style.width = `calc(10px + ${Math.round((i + 1) / quizData.questions.length * 100)}% - ${Math.round((i + 1) / quizData.questions.length * 10)}px)`;
-          if (i === quizData.questions.length - 1) {
-            document.getElementsByClassName("create-quiz-progress")[0].style.borderRadius = "0px 0px 10px 10px";
-            setTimeout(function() {
-              window.open("https://quiz.simplexshotz.tk/quiz/index.html?quiz=" + name, "_self");
-            }, 0);
-          }
         }
+
+        document.getElementsByClassName("create-quiz-progress")[0].style.borderRadius = "0px 0px 10px 10px";
+        setTimeout(function() {
+          window.open("https://quiz.simplexshotz.tk/quiz/index.html?quiz=" + name, "_self");
+        }, 1000);
 
       }
 
