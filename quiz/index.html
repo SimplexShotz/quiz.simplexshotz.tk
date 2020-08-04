@@ -73,7 +73,13 @@
         transition: background-color 0.5s;
       }
       .option-number-active {
-        background-color: rgb(200, 200, 200);
+        background-color: rgba(0, 0, 0, 0.2);
+      }
+      .option-number-correct {
+        background-color: rgb(0, 200, 0, 0.2);
+      }
+      .option-number-incorrect {
+        background-color: rgb(200, 0, 0, 0.2);
       }
       .option-text-container {
         display: flex;
@@ -183,7 +189,6 @@
         for (let i = 0; i < quizzesKeys.length; i++) {
           if (!quizzes[quizzesKeys[i]]) { // If not, download the quiz(zes)
 
-            console.log("OOF");
             let data = await ref.quizzes.child(quizzesKeys[i]).once("value");
             let d = data.val();
 
@@ -390,10 +395,19 @@
             if (quiz.questions[i].correctAnswers.indexOf(quiz.questions[i].selected) !== -1) { // Question was answered correctly!
               document.getElementsByClassName("questions")[0].childNodes[i].childNodes[1].childNodes[1].style.color = "rgb(0, 200, 0)";
               document.getElementsByClassName("questions")[0].childNodes[i].childNodes[1].childNodes[1].innerText = "✓ " + document.getElementsByClassName("questions")[0].childNodes[i].childNodes[1].childNodes[1].innerText;
+              document.getElementsByClassName("questions")[0].childNodes[i].childNodes[1].childNodes[3].childNodes[quiz.questions[i].selected * 2 + 1].childNodes[1].classList.remove("option-number-active");
+              document.getElementsByClassName("questions")[0].childNodes[i].childNodes[1].childNodes[3].childNodes[quiz.questions[i].selected * 2 + 1].childNodes[1].classList.add("option-number-correct");
               score++;
             } else { // Question was answered incorrectly!
               document.getElementsByClassName("questions")[0].childNodes[i].childNodes[1].childNodes[1].style.color = "rgb(200, 0, 0)";
               document.getElementsByClassName("questions")[0].childNodes[i].childNodes[1].childNodes[1].innerText = "✗ " + document.getElementsByClassName("questions")[0].childNodes[i].childNodes[1].childNodes[1].innerText;
+              document.getElementsByClassName("questions")[0].childNodes[i].childNodes[1].childNodes[3].childNodes[quiz.questions[i].selected * 2 + 1].childNodes[1].classList.remove("option-number-active");
+              document.getElementsByClassName("questions")[0].childNodes[i].childNodes[1].childNodes[3].childNodes[quiz.questions[i].selected * 2 + 1].childNodes[1].classList.add("option-number-incorrect");
+              if (quiz.options.showCorrectAnswers) {
+                for (let j = 0; j < quiz.questions[i].correctAnswers.length; j++) {
+                  document.getElementsByClassName("questions")[0].childNodes[i].childNodes[1].childNodes[3].childNodes[quiz.questions[i].correctAnswers[j] * 2 + 1].childNodes[1].classList.add("option-number-correct");
+                }
+              }
             }
           }
           document.getElementsByClassName("quizplayer-name")[0].innerText += " (Results)";
