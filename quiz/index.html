@@ -30,7 +30,7 @@
 
     <style>
 
-      .quizplayer-title, .question, .finish-quiz {
+      .quizplayer-title, .question, .finish-quiz, .play-again {
         padding: 20px;
         margin-top: 20px;
         border-radius: 10px;
@@ -84,13 +84,13 @@
         font-weight: 300;
       }
 
-      .finish-quiz {
+      .finish-quiz, .play-again {
         transition: background-color 0.25s;
       }
-      .finish-quiz:hover {
+      .finish-quiz:hover, .play-again:hover {
         cursor: pointer;
       }
-      .finish-quiz:active {
+      .finish-quiz:active, .play-again:active {
         background-color: rgb(250, 250, 250);
       }
 
@@ -123,8 +123,11 @@
         </div>
         <div class="questions">
         </div>
-        <div class="finish-quiz" onclick="check()">
+        <div class="finish-quiz" style="display: none;" onclick="check()">
           <h1 class="no-margin">✓ Finish Quiz</h1>
+        </div>
+        <div class="play-again" style="display: none;" onclick="loadQuiz(quizzes[getQueries().quiz])">
+          <h1 class="no-margin">Play Again</h1>
         </div>
       </div>
     </div>
@@ -241,6 +244,13 @@
 
       function loadQuiz(quizData) {
 
+        window.scrollTo(0, 0);
+
+        // Reset some things:
+        document.getElementsByClassName("questions")[0].innerHTML = "";
+        document.getElementsByClassName("finish-quiz")[0].style.display = "block";
+        document.getElementsByClassName("play-again")[0].style.display = "none";
+
         // Update title text:
         document.getElementsByClassName("quizplayer-name")[0].innerHTML = quizData.name;
         document.getElementsByClassName("quizplayer-name")[0].classList.remove("no-margin");
@@ -251,13 +261,13 @@
         let questions = [];
         let tempQuestions = [];
         for (let i = 0; i < quizData.questions.length; i++) {
-          tempQuestions.push({
+          tempQuestions.push(JSON.parse(JSON.stringify({ // JSON parse and stringify to detach the objects
             question: quizData.questions[i].question,
             imageURI: quizData.questions[i].imageURI,
-            answers: quizData.questions[i].answers,//
+            answers: quizData.questions[i].answers,
             selected: -1,
             correctAnswers: quizData.questions[i].correctAnswers
-          });
+          })));
         }
         if (quizData.options.randomizeQuestionOrder) {
           for (let i = 0; i < questionLength; i++) {
@@ -268,12 +278,40 @@
             questions.push(tempQuestions.splice(0, 1)[0]);
           }
         }
+        // Randomize answers:
+        if (quizData.options.randomizeAnswerOrder) {
+          for (let i = 0; i < questions.length; i++) {
+            let originalAnswerMap = [];
+            let newAnswerMap = [];
+
+            for (let j = 0; j < questions[i].answers.length; j++) {
+              originalAnswerMap.push(j);
+            }
+
+            let answerLength = originalAnswerMap.length;
+            for (let j = 0; j < answerLength; j++) {
+              newAnswerMap.push(originalAnswerMap.splice(Math.floor(Math.random() * originalAnswerMap.length), 1)[0]);
+            }
+
+            let answers = [];
+            for (let j = 0; j < questions[i].answers.length; j++) {
+              answers.push(questions[i].answers[newAnswerMap[j]]);
+            }
+            questions[i].answers = answers;
+
+            for (let j = 0; j < questions[i].correctAnswers.length; j++) {
+              questions[i].correctAnswers[j] = newAnswerMap.indexOf(questions[i].correctAnswers[j]);
+            }
+
+          }
+        }
 
         // Update quiz object:
         quiz = {
           name: quizData.name,
           options: quizData.options,
-          questions: questions
+          questions: questions,
+          completed: false
         };
 
         let letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -309,21 +347,23 @@
       }
 
       function selectOption(Qi, Ai, el) {
-        // Deselect all other options (aside from the one being clicked on):
-        for (let i = 1; i < el.parentNode.childNodes.length; i += 2) {
-          if ((i - 1) / 2 !== Ai) {
-            if (el.parentNode.childNodes[i].childNodes[1].classList.contains("option-number-active")) {
-              el.parentNode.childNodes[i].childNodes[1].classList.remove("option-number-active");
+        if (!quiz.completed) {
+          // Deselect all other options (aside from the one being clicked on):
+          for (let i = 1; i < el.parentNode.childNodes.length; i += 2) {
+            if ((i - 1) / 2 !== Ai) {
+              if (el.parentNode.childNodes[i].childNodes[1].classList.contains("option-number-active")) {
+                el.parentNode.childNodes[i].childNodes[1].classList.remove("option-number-active");
+              }
             }
           }
-        }
-        // Toggle the option being clicked on:
-        if (el.childNodes[1].classList.contains("option-number-active")) { // deselect
-          el.childNodes[1].classList.remove("option-number-active");
-          quiz.questions[Qi].selected = -1;
-        } else { // select
-          el.childNodes[1].classList.add("option-number-active");
-          quiz.questions[Qi].selected = Ai;
+          // Toggle the option being clicked on:
+          if (el.childNodes[1].classList.contains("option-number-active")) { // deselect
+            el.childNodes[1].classList.remove("option-number-active");
+            quiz.questions[Qi].selected = -1;
+          } else { // select
+            el.childNodes[1].classList.add("option-number-active");
+            quiz.questions[Qi].selected = Ai;
+          }
         }
       }
 
@@ -338,19 +378,22 @@
         }
         if (answeredAllQuestions) { // Have answered all questions
 
+          quiz.completed = true;
+
           window.scrollTo(0, 0);
 
-          document.getElementsByClassName("finish-quiz")[0].parentNode.removeChild(document.getElementsByClassName("finish-quiz")[0]);
+          document.getElementsByClassName("finish-quiz")[0].style.display = "none";
+          document.getElementsByClassName("play-again")[0].style.display = "block";
 
           let score = 0;
           for (let i = 0; i < quiz.questions.length; i++) {
             if (quiz.questions[i].correctAnswers.indexOf(quiz.questions[i].selected) !== -1) { // Question was answered correctly!
-              document.getElementsByClassName("questions")[0].childNodes[i + 1].childNodes[1].childNodes[1].style.color = "rgb(0, 200, 0)";
-              document.getElementsByClassName("questions")[0].childNodes[i + 1].childNodes[1].childNodes[1].innerText = "✓ " + document.getElementsByClassName("questions")[0].childNodes[i + 1].childNodes[1].childNodes[1].innerText;
+              document.getElementsByClassName("questions")[0].childNodes[i].childNodes[1].childNodes[1].style.color = "rgb(0, 200, 0)";
+              document.getElementsByClassName("questions")[0].childNodes[i].childNodes[1].childNodes[1].innerText = "✓ " + document.getElementsByClassName("questions")[0].childNodes[i].childNodes[1].childNodes[1].innerText;
               score++;
             } else { // Question was answered incorrectly!
-              document.getElementsByClassName("questions")[0].childNodes[i + 1].childNodes[1].childNodes[1].style.color = "rgb(200, 0, 0)";
-              document.getElementsByClassName("questions")[0].childNodes[i + 1].childNodes[1].childNodes[1].innerText = "✗ " + document.getElementsByClassName("questions")[0].childNodes[i + 1].childNodes[1].childNodes[1].innerText;
+              document.getElementsByClassName("questions")[0].childNodes[i].childNodes[1].childNodes[1].style.color = "rgb(200, 0, 0)";
+              document.getElementsByClassName("questions")[0].childNodes[i].childNodes[1].childNodes[1].innerText = "✗ " + document.getElementsByClassName("questions")[0].childNodes[i].childNodes[1].childNodes[1].innerText;
             }
           }
           document.getElementsByClassName("quizplayer-name")[0].innerText += " (Results)";

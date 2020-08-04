@@ -199,6 +199,12 @@
             </div>
             <p class="quizcreator-option-label">Randomize Question Order</p>
           </div>
+          <div class="quizcreator-option quizcreator-option-checkbox-container">
+            <div class="quizcreator-checkbox-container">
+              <input class="quizcreator-option-checkbox" type="checkbox" title="Randomizes the order in which answers are presented." onclick="updateOption('randomizeAnswerOrder', this)">
+            </div>
+            <p class="quizcreator-option-label">Randomize Answer Order</p>
+          </div>
           <div class="quizcreator-option quizcreator-option-input-container">
             <p class="quizcreator-option-label">Questions to Show (leave as "0" to show all):</p>
             <input class="quizcreator-option-input" type="number" title='This is how many questions will be shown each time the quiz is taken. For example, if your quiz has 10 questions, but this value is set to 5, only 5 out of the 10 quesitons will be shown each time someone takes your quiz. If you change this value, you should enable "Randomize Question Order," as otherwise, some questions may never be seen.' onchange="updateOption('questionsToShow', this)" value="0">
@@ -312,6 +318,7 @@
         options: {
           editable: false,
           randomizeQuestionOrder: false,
+          randomizeAnswerOrder: false,
           questionsToShow: 0
         },
         questions: [],
@@ -337,6 +344,7 @@
             document.getElementsByClassName("quizcreator-name")[0].value = quizData[queries.quiz].name;
             document.getElementsByClassName("quizcreator-option-checkbox")[0].checked = quizData[queries.quiz].options.editable;
             document.getElementsByClassName("quizcreator-option-checkbox")[1].checked = quizData[queries.quiz].options.randomizeQuestionOrder;
+            document.getElementsByClassName("quizcreator-option-checkbox")[2].checked = quizData[queries.quiz].options.randomizeAnswerOrder;
             document.getElementsByClassName("quizcreator-option-input")[0].value = quizData[queries.quiz].options.questionsToShow;
 
             quiz = quizData[queries.quiz];
@@ -644,6 +652,9 @@
           break;
           case "randomizeQuestionOrder":
             quiz.options.randomizeQuestionOrder = el.checked;
+          break;
+          case "randomizeAnswerOrder":
+            quiz.options.randomizeAnswerOrder = el.checked;
           break;
           case "questionsToShow":
             quiz.options.questionsToShow = Number(el.value) || 0;
