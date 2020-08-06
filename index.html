@@ -60,6 +60,10 @@
         line-height: 24pt;
       }
 
+      .quizfinder-description {
+        margin-top: 5px;
+      }
+
     </style>
   </head>
   <body>
@@ -93,7 +97,7 @@
     </div>
 
     <div class="footer">
-      <p class="small">ReQuiz v1.3.5</p>
+      <p class="small">ReQuiz v1.3.6</p>
       <p class="small">By SimplexShotz</p>
     </div>
 
@@ -196,11 +200,12 @@
           quizEl.innerHTML = `
             <div class="quizfinder-quiz" onclick="openQuiz('${quizzesArr[i].i}')">
               <div class="quizfinder-title">
-                <h1 class="quizfinder-name">${quizzesArr[i].name}</h1>
+                <h1 class="quizfinder-name no-margin">${quizzesArr[i].name}</h1>
                 ${quizzesArr[i].options.editable ? `<a class="small" href="https://quiz.simplexshotz.tk/quiz-editor/index.html?quiz=${quizzesArr[i].i}">Edit</a>` : ``}
               </div>
-              <p class="quizfinder-questions no-margin">${quizzesArr[i].questions.length} Question${quizzesArr[i].questions.length !== 1 ? "s" : ""}${quizzesArr[i].questions.length !== questionLength ? ` (${questionLength} Shown)` : ""}</p>
-              <p class="quizfinder-time small">${quizzesArr[i].edited ? "Edited" : "Created"} ${convertToTimeString(new Date().getTime() - quizzesArr[i].created)} ago</p>
+              <p class="quizfinder-description">${quizzesArr[i].description}</p>
+              <p class="quizfinder-questions no-margin small">${quizzesArr[i].questions.length} Question${quizzesArr[i].questions.length !== 1 ? "s" : ""}${quizzesArr[i].questions.length !== questionLength ? ` (${questionLength} Shown)` : ""}</p>
+              <p class="quizfinder-time no-margin small">${quizzesArr[i].edited ? "Edited" : "Created"} ${convertToTimeString(new Date().getTime() - quizzesArr[i].created)} ago</p>
             </div>
           `;
           document.getElementsByClassName("quizfinder-quizzes")[0].appendChild(quizEl);

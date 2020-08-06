@@ -55,13 +55,17 @@
         user-select: none;
         flex-direction: column;
       }
-      .quizcreator-name, .question-question, .quizcreator-option-input {
+      .quizcreator-name, .question-question, .quizcreator-option-input, .quizcreator-description {
         width: calc(100% - 12px);
         padding: 5px;
         font-size: 14pt;
       }
-      .quizcreator-name:focus, .question-question:focus, .quizcreator-option-input:focus {
+      .quizcreator-name:focus, .question-question:focus, .quizcreator-option-input:focus, .quizcreator-description:focus {
         outline: none;
+      }
+      .quizcreator-description {
+        width: calc(100% - 10px);
+        margin-top: 5px;
       }
       .question-title {
         display: flex;
@@ -185,6 +189,7 @@
         <div class="quizcreator-title">
           <h1>Quiz Editor</h1>
           <input class="quizcreator-name" type="text" placeholder="Quiz Name" onkeyup="updateName(this)">
+          <textarea rows="2" class="quizcreator-description" placeholder="Quiz Description" onkeyup="updateDescription(this);"></textarea>
         </div>
         <div class="quizcreator-options">
           <h1>Options</h1>
@@ -321,6 +326,7 @@
 
       var quiz = {
         name: "",
+        description: "",
         options: {
           editable: false,
           randomizeQuestionOrder: false,
@@ -349,6 +355,7 @@
         if (queries.quiz) {
           if (quizData[queries.quiz].options.editable) {
             document.getElementsByClassName("quizcreator-name")[0].value = quizData[queries.quiz].name;
+            document.getElementsByClassName("quizcreator-description")[0].value = quizData[queries.quiz].description;
             document.getElementsByClassName("quizcreator-option-checkbox")[0].checked = quizData[queries.quiz].options.editable;
             document.getElementsByClassName("quizcreator-option-checkbox")[1].checked = quizData[queries.quiz].options.randomizeQuestionOrder;
             document.getElementsByClassName("quizcreator-option-checkbox")[2].checked = quizData[queries.quiz].options.randomizeAnswerOrder;
@@ -441,48 +448,53 @@
         // Quiz verification:
         let verified = true;
         if (quiz.name !== "") { // Verify that it has a name
-          if (quizzesKeys.indexOf(quiz.name) === -1 || getQueries().quiz) { // Verify that the name does not already exist
-            if (quiz.questions.length !== 0) { // Verify that the quiz has at least 1 question
-              for (let i = 0; i < quiz.questions.length; i++) {
-                if (quiz.questions[i].question === "") { // Verify that all questions have a question
-                  error("Question " + (i + 1) + "'s question field is blank.");
-                  verified = false;
-                } else {
-                  let allBlankAnswers = true;
-                  for (let j = 0; j < quiz.questions[i].answers.length; j++) {
-                    if (quiz.questions[i].answers[j] !== "") {
-                      allBlankAnswers = false;
-                      break;
+          if (quiz.description !== "") { // Verify that it has a description
+            if (quizzesKeys.indexOf(quiz.name) === -1 || getQueries().quiz) { // Verify that the name does not already exist
+              if (quiz.questions.length !== 0) { // Verify that the quiz has at least 1 question
+                for (let i = 0; i < quiz.questions.length; i++) {
+                  if (quiz.questions[i].question === "") { // Verify that all questions have a question
+                    error("Question " + (i + 1) + "'s question field is blank.");
+                    verified = false;
+                  } else {
+                    let allBlankAnswers = true;
+                    for (let j = 0; j < quiz.questions[i].answers.length; j++) {
+                      if (quiz.questions[i].answers[j] !== "") {
+                        allBlankAnswers = false;
+                        break;
+                      }
                     }
-                  }
-                  if (!allBlankAnswers) { // Verify that there is at least one actual answer
-                    if (quiz.questions[i].correctAnswers.length === 0) { // There are no correct answers
-                      error("You must select at least 1 correct answer for Question " + (i + 1) + "!");
-                      verified = false;
-                    } else {
-                      let allCorrectAnswersBlank = true;
-                      for (let k = 0; k < quiz.questions[i].correctAnswers.length; k++) {
-                        if (quiz.questions[i].answers[quiz.questions[i].correctAnswers[k]] !== "") {
-                          allCorrectAnswersBlank = false;
+                    if (!allBlankAnswers) { // Verify that there is at least one actual answer
+                      if (quiz.questions[i].correctAnswers.length === 0) { // There are no correct answers
+                        error("You must select at least 1 correct answer for Question " + (i + 1) + "!");
+                        verified = false;
+                      } else {
+                        let allCorrectAnswersBlank = true;
+                        for (let k = 0; k < quiz.questions[i].correctAnswers.length; k++) {
+                          if (quiz.questions[i].answers[quiz.questions[i].correctAnswers[k]] !== "") {
+                            allCorrectAnswersBlank = false;
+                          }
+                        }
+                        if (allCorrectAnswersBlank) { // All correct answers are blank
+                          error("You must select at least 1 correct answer for Question " + (i + 1) + " that isn't blank!");
+                          verified = false;
                         }
                       }
-                      if (allCorrectAnswersBlank) { // All correct answers are blank
-                        error("You must select at least 1 correct answer for Question " + (i + 1) + " that isn't blank!");
-                        verified = false;
-                      }
+                    } else { // All answers are blank
+                      error("All of Question " + (i + 1) + "'s answer fields are blank.");
+                      verified = false;
                     }
-                  } else { // All answers are blank
-                    error("All of Question " + (i + 1) + "'s answer fields are blank.");
-                    verified = false;
                   }
                 }
+              } else { // Quiz has no questions
+                error("You can't create a quiz with no questions! Add some questions and try again.");
+                verified = false;
               }
-            } else { // Quiz has no questions
-              error("You can't create a quiz with no questions! Add some questions and try again.");
+            } else { // Name already exists
+              error("A quiz with that name already exists! Use a more unique name and try again.");
               verified = false;
             }
-          } else { // Name already exists
-            error("A quiz with that name already exists! Use a more unique name and try again.");
+          } else {
+            error("Enter a description for the quiz!");
             verified = false;
           }
         } else { // Does not have a name
@@ -651,7 +663,10 @@
       }
 
       function updateName(el) {
-        quiz.name = el.value;
+        quiz.name = sterilize(el.value);
+      }
+      function updateDescription(el) {
+        quiz.description = sterilize(el.value);
       }
       function updateOption(option, el) {
         switch(option) {
@@ -674,7 +689,7 @@
         }
       }
       function updateQuestion(i, el) {
-        quiz.questions[i].question = el.value;
+        quiz.questions[i].question = sterilize(el.value);
       }
       function updateCorrect(Qi, Ai, el) {
         if (quiz.questions[Qi].correctAnswers.indexOf(Ai) === -1 && el.checked) {
@@ -684,7 +699,7 @@
         }
       }
       function updateAnswer(Qi, Ai, el) { // question index / answer index
-        quiz.questions[Qi].answers[Ai] = el.value;
+        quiz.questions[Qi].answers[Ai] = sterilize(el.value);
         if (el.value !== "" && Ai === quiz.questions[Qi].answers.length - 1) {
           quiz.questions[Qi].answers.push("");
           let newEl = document.createElement("div");
@@ -747,6 +762,10 @@
           `;
           document.getElementsByClassName("questions")[0].appendChild(newEl);
         }
+      }
+
+      function sterilize(txt) {
+        return txt.split("<").join("&lt").split(">").join("&gt").split("\n").join("<br>").split("<br> ").join("<br>&nbsp");
       }
 
       let errors = [];

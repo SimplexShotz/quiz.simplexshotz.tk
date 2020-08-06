@@ -39,6 +39,14 @@
         flex-direction: column;
       }
 
+      .quizplayer-description {
+        margin-top: 5px;
+        display: none;
+      }
+      .quizplayer-questions {
+        display: none;
+      }
+
       .question-image {
         max-width: 100%;
         max-height: 300px;
@@ -125,7 +133,8 @@
       <div class="quizplayer">
         <div class="quizplayer-title">
           <h1 class="quizplayer-name no-margin">Loading Quiz...</h1>
-          <p class="quizplayer-questions no-margin"></p>
+          <p class="quizplayer-description"></p>
+          <p class="quizplayer-questions no-margin-bottom small"></p>
         </div>
         <div class="questions">
         </div>
@@ -258,9 +267,11 @@
 
         // Update title text:
         document.getElementsByClassName("quizplayer-name")[0].innerHTML = quizData.name;
-        document.getElementsByClassName("quizplayer-name")[0].classList.remove("no-margin");
+        document.getElementsByClassName("quizplayer-description")[0].innerHTML = quizData.description;
+        document.getElementsByClassName("quizplayer-description")[0].style.display = "block";
         let questionLength = (quizData.options.questionsToShow ? quizData.options.questionsToShow : quizData.questions.length);
         document.getElementsByClassName("quizplayer-questions")[0].innerHTML = questionLength + " Question" + (questionLength !== 1 ? "s" : "");
+        document.getElementsByClassName("quizplayer-questions")[0].style.display = "block";
 
         // Get/randomize questions:
         let questions = [];
@@ -338,7 +349,7 @@
           let el = document.createElement("div");
           el.innerHTML = `
             <div class="question">
-              <h1>Question ${i + 1}: ${questions[i].question.split("<").join("&lt").split(">").join("&gt").split("\n").join("<br>").split("<br> ").join("<br>&nbsp")}</h1>
+              <h1>Question ${i + 1}: ${questions[i].question}</h1>
               ${(questions[i].imageURI !== undefined && questions[i].imageURI !== "") ? `<img class="question-image" src="${questions[i].imageURI}">` : ""}
               <div class="options">
                 ${answersText}
