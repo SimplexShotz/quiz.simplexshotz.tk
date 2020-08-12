@@ -354,8 +354,8 @@
         let queries = getQueries();
         if (queries.quiz) {
           if (quizData[queries.quiz].options.editable) {
-            document.getElementsByClassName("quizcreator-name")[0].value = quizData[queries.quiz].name;
-            document.getElementsByClassName("quizcreator-description")[0].value = quizData[queries.quiz].description;
+            document.getElementsByClassName("quizcreator-name")[0].value = desterilize(quizData[queries.quiz].name);
+            document.getElementsByClassName("quizcreator-description")[0].value = desterilize(quizData[queries.quiz].description);
             document.getElementsByClassName("quizcreator-option-checkbox")[0].checked = quizData[queries.quiz].options.editable;
             document.getElementsByClassName("quizcreator-option-checkbox")[1].checked = quizData[queries.quiz].options.randomizeQuestionOrder;
             document.getElementsByClassName("quizcreator-option-checkbox")[2].checked = quizData[queries.quiz].options.randomizeAnswerOrder;
@@ -725,7 +725,7 @@
               answerText += `
                 <div class="question-answer">
                   <input class="question-answer-correct" type="checkbox" title="This is a correct answer." ${(j < quiz.questions[i].answers.length && quiz.questions[i].correctAnswers.indexOf(j) !== -1) ? "checked" : ""} onclick="updateCorrect(${i}, ${j}, this)">
-                  <input class="question-answer-input" type="text" placeholder="Answer ${j + 1}" value="${j < quiz.questions[i].answers.length ? quiz.questions[i].answers[j] : ""}" onkeyup="updateAnswer(${i}, ${j}, this)">
+                  <input class="question-answer-input" type="text" placeholder="Answer ${j + 1}" value="${j < quiz.questions[i].answers.length ? desterilize(quiz.questions[i].answers[j]) : ""}" onkeyup="updateAnswer(${i}, ${j}, this)">
                 </div>
               `;
             }
@@ -740,7 +740,7 @@
                 <p class="small" onclick="deleteQuestion(${i})">Delete</p>
               </div>
               <h2>Question:</h2>
-              <textarea rows="1" class="question-question" placeholder="Question" onkeyup="updateQuestion(${i}, this);">${quiz.questions[i].question}</textarea>
+              <textarea rows="1" class="question-question" placeholder="Question" onkeyup="updateQuestion(${i}, this);">${desterilize(quiz.questions[i].question)}</textarea>
               <h2>Image (Optional):</h2>
               <div class="question-image-container">
                 <input class="question-image-input" type="file" accept="image/*" id="file${i}" onchange="updateImage(${i}, this)">
@@ -767,6 +767,9 @@
 
       function sterilize(txt) {
         return txt.split("<").join("&lt").split(">").join("&gt").split("\n").join("<br>").split("<br> ").join("<br>&nbsp");
+      }
+      function desterilize(txt) {
+        return txt.split("<br>&nbsp").join("<br> ").split("<br>").join("\n").split("&gt").join(">").split("&lt").join("<");
       }
 
       let errors = [];
